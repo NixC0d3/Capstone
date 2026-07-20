@@ -36,6 +36,29 @@ class Category(db.Model, SerializerMixin):
     category_id = db.Column(db.Integer, primary_key=True)
     category_name = db.Column(db.String(100), nullable=False)
     category_type = db.Column(db.String(30), nullable=False)  # business, charity, both
+    
+class OrganisationCategory(db.Model, SerializerMixin):
+    __tablename__ = "organisation_categories"
+
+    organisation_category_id = db.Column(db.Integer, primary_key=True)
+    organisation_id = db.Column(
+        db.Integer,
+        db.ForeignKey("organisations.organisation_id", ondelete="CASCADE"),
+        nullable=False
+    )
+    category_id = db.Column(
+        db.Integer,
+        db.ForeignKey("categories.category_id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "organisation_id",
+            "category_id",
+            name="unique_organisation_category"
+        ),
+    )
 
 class Location(db.Model, SerializerMixin):
     __tablename__ = "locations"
