@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Initial Login</h1>
+<p>Login as a General User, Small Business, Charity, or Admin.</p>
+
+<div class="login-box">
+    <h2>CivilInfoHub</h2>
+
+    <form method="POST">
+        <label>Email</label>
+        <input type="email" name="email" required>
+
+        <label>Password</label>
+        <input type="password" name="password" required>
+
+        <button type="submit">Login</button>
+    </form>
+</div>
+
+{% endblock %}

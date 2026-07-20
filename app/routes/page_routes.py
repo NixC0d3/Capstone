@@ -9,6 +9,7 @@ from flask import (
     session,
     flash
 )
+
 from sqlalchemy import text
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -18,150 +19,19 @@ from app.models import (
     Role,
     Organisation,
     Category,
+    Location,
     RatingReview,
     SavedOrganisation
 )
 
+# Create the Blueprint before using @page_bp.route
 page_bp = Blueprint("page_bp", __name__)
 
-
-# ---------------------------------------------------------
-# Helper function: get the currently logged-in user
-# ---------------------------------------------------------
-def get_current_user():
-    user_id = session.get("user_id")
-
-    if not user_id:
-        return None
-
-    return User.query.get(user_id)
-
-
-# ---------------------------------------------------------
-# Helper decorator: protect pages that require login
-# ---------------------------------------------------------
-def login_required(route_function):
-    @wraps(route_function)
-    def wrapper(*args, **kwargs):
-        if not session.get("user_id"):
-            flash("Please log in first.")
-            return redirect(url_for("page_bp.login"))
-
-        return route_function(*args, **kwargs)
-
-    return wrapper
-
-
-# ---------------------------------------------------------
-# Home page
-# ---------------------------------------------------------
 @page_bp.route("/")
 def home():
     return redirect(url_for("page_bp.explore"))
 
 
-# ---------------------------------------------------------
-# Register
-# ---------------------------------------------------------
-@page_bp.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        role_name = request.form.get("role_name")
-        first_name = request.form.get("first_name")
-        last_name = request.form.get("last_name")
-        email = request.form.get("email")
-        password = request.form.get("password")
-
-        # Basic validation
-        if not role_name or not first_name or not last_name or not email or not password:
-            flash("All fields are required.")
-            return redirect(url_for("page_bp.register"))
-
-        # Check if email already exists
-        existing_user = User.query.filter_by(email=email).first()
-
-        if existing_user:
-            flash("An account with this email already exists.")
-            return redirect(url_for("page_bp.register"))
-
-        # Find selected role
-        role = Role.query.filter_by(role_name=role_name).first()
-
-        if not role:
-            flash("Invalid role selected.")
-            return redirect(url_for("page_bp.register"))
-
-        # Store hashed password, not plain text
-        user = User(
-            role_id=role.role_id,
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            password_hash=generate_password_hash(password)
-        )
-
-        db.session.add(user)
-        db.session.commit()
-
-        flash("Registration successful. Please log in.")
-        return redirect(url_for("page_bp.login"))
-
-    roles = Role.query.all()
-    return render_template("register.html", roles=roles)
-
-
-# ---------------------------------------------------------
-# Login
-# ---------------------------------------------------------
-@page_bp.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
-
-        user = User.query.filter_by(email=email).first()
-
-        if not user:
-            flash("Invalid email or password.")
-            return redirect(url_for("page_bp.login"))
-
-        # Some old imported users may have plain text passwords.
-        # This allows both hashed passwords and simple demo passwords.
-        password_is_correct = False
-
-        if user.password_hash:
-            try:
-                password_is_correct = check_password_hash(user.password_hash, password)
-            except ValueError:
-                password_is_correct = user.password_hash == password
-
-        if not password_is_correct:
-            flash("Invalid email or password.")
-            return redirect(url_for("page_bp.login"))
-
-        # Store user ID in session after successful login
-        session["user_id"] = user.user_id
-        session["user_name"] = f"{user.first_name} {user.last_name}"
-
-        flash("Login successful.")
-        return redirect(url_for("page_bp.explore"))
-
-    return render_template("login.html")
-
-
-# ---------------------------------------------------------
-# Logout
-# ---------------------------------------------------------
-@page_bp.route("/logout")
-def logout():
-    session.clear()
-    flash("You have been logged out.")
-    return redirect(url_for("page_bp.login"))
-
-
-# ---------------------------------------------------------
-# Explore organisations with filtering
-# ---------------------------------------------------------
 @page_bp.route("/explore")
 def explore():
     search = request.args.get("search", "").strip()
@@ -170,7 +40,7 @@ def explore():
 
     query = Organisation.query
 
-    # Filter by business or charity
+    # Filter by organisation type: business or charity
     if organisation_type:
         query = query.filter(Organisation.organisation_type == organisation_type)
 
@@ -181,15 +51,20 @@ def explore():
             | Organisation.description.ilike(f"%{search}%")
         )
 
-    # Filter by category using organisation_categories table
+    # Filter by category using the organisation_categories linking table
     if category_id:
-        query = query.join(
-            text(
-                "organisation_categories ON organisations.organisation_id = organisation_categories.organisation_id"
+        query = query.filter(
+            Organisation.organisation_id.in_(
+                db.session.execute(
+                    text("""
+                        SELECT organisation_id
+                        FROM organisation_categories
+                        WHERE category_id = :category_id
+                    """),
+                    {"category_id": category_id}
+                ).scalars()
             )
-        ).filter(
-            text("organisation_categories.category_id = :category_id")
-        ).params(category_id=category_id)
+        )
 
     organisations = query.order_by(Organisation.organisation_name.asc()).all()
     categories = Category.query.order_by(Category.category_name.asc()).all()
@@ -203,148 +78,224 @@ def explore():
         category_id=category_id
     )
 
+@page_bp.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        account_type = request.form.get("account_type")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
 
-# ---------------------------------------------------------
-# View one organisation
-# ---------------------------------------------------------
-@page_bp.route("/organisations/<int:organisation_id>")
-def organisation_details(organisation_id):
-    organisation = Organisation.query.get_or_404(organisation_id)
+        # Basic validation
+        if not account_type or not email or not password or not confirm_password:
+            flash("Please fill out all required fields.")
+            return redirect(url_for("page_bp.register"))
 
-    reviews = RatingReview.query.filter_by(
-        organisation_id=organisation_id,
-        is_hidden=False
-    ).order_by(RatingReview.created_at.desc()).all()
+        if password != confirm_password:
+            flash("Passwords do not match.")
+            return redirect(url_for("page_bp.register"))
 
-    # Calculate average rating
-    total_reviews = len(reviews)
+        # Check if email is already used
+        existing_user = User.query.filter_by(email=email).first()
 
-    if total_reviews > 0:
-        average_rating = sum(review.rating for review in reviews) / total_reviews
-    else:
-        average_rating = 0
+        if existing_user:
+            flash("An account with this email already exists.")
+            return redirect(url_for("page_bp.register"))
 
-    current_user = get_current_user()
+        role = Role.query.filter_by(role_name=account_type).first()
 
-    already_saved = False
+        if not role:
+            flash("Invalid account type selected.")
+            return redirect(url_for("page_bp.register"))
 
-    if current_user:
-        saved = SavedOrganisation.query.filter_by(
-            user_id=current_user.user_id,
-            organisation_id=organisation_id
-        ).first()
+        # -----------------------------
+        # General user registration
+        # -----------------------------
+        if account_type == "general_user":
+            first_name = request.form.get("first_name")
+            last_name = request.form.get("last_name")
 
-        already_saved = saved is not None
+            if not first_name or not last_name:
+                flash("Please enter your first and last name.")
+                return redirect(url_for("page_bp.register"))
+
+            user = User(
+                role_id=role.role_id,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                password_hash=generate_password_hash(password)
+            )
+
+            db.session.add(user)
+            db.session.commit()
+
+            flash("General user account created. Please log in.")
+            return redirect(url_for("page_bp.login"))
+
+        # -----------------------------
+        # Business / charity registration
+        # -----------------------------
+        if account_type in ["business_user", "charity_user"]:
+            owner_name = request.form.get("owner_name")
+            organisation_name = request.form.get("organisation_name")
+            phone = request.form.get("phone")
+            street_address = request.form.get("street_address")
+            city_town = request.form.get("city_town")
+            parish = request.form.get("parish")
+            description = request.form.get("description")
+            website_url = request.form.get("website_url")
+            selected_categories = request.form.getlist("category_ids")
+
+            if not owner_name or not organisation_name:
+                flash("Owner name and organisation name are required.")
+                return redirect(url_for("page_bp.register"))
+
+            if not selected_categories:
+                flash("Please select at least one category.")
+                return redirect(url_for("page_bp.register"))
+
+            # Split owner name into first and last name
+            name_parts = owner_name.split()
+
+            if len(name_parts) == 1:
+                first_name = name_parts[0]
+                last_name = "Owner"
+            else:
+                first_name = name_parts[0]
+                last_name = " ".join(name_parts[1:])
+
+            # Create the user account first
+            user = User(
+                role_id=role.role_id,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                password_hash=generate_password_hash(password)
+            )
+
+            db.session.add(user)
+            db.session.flush()
+
+            # Create location record
+            location = Location(
+                parish=parish,
+                town=city_town,
+                address=street_address
+            )
+
+            db.session.add(location)
+            db.session.flush()
+
+            # First selected category becomes the main category
+            main_category_id = int(selected_categories[0])
+
+            organisation_type = "business"
+
+            if account_type == "charity_user":
+                organisation_type = "charity"
+
+            organisation = Organisation(
+                owner_user_id=user.user_id,
+                category_id=main_category_id,
+                location_id=location.location_id,
+                organisation_name=organisation_name,
+                organisation_type=organisation_type,
+                description=description,
+                phone=phone,
+                email=email,
+                website_url=website_url
+            )
+
+            db.session.add(organisation)
+            db.session.flush()
+
+            # Link organisation to all selected categories
+            for category_id in selected_categories:
+                db.session.execute(
+                    text("""
+                        INSERT INTO organisation_categories (organisation_id, category_id)
+                        VALUES (:organisation_id, :category_id)
+                        ON CONFLICT (organisation_id, category_id) DO NOTHING;
+                    """),
+                    {
+                        "organisation_id": organisation.organisation_id,
+                        "category_id": int(category_id)
+                    }
+                )
+
+            db.session.commit()
+
+            flash("Account and organisation profile created. Please log in.")
+            return redirect(url_for("page_bp.login"))
+
+    # Get categories for the register page
+    business_categories = Category.query.filter(
+        Category.category_type.in_(["business", "both"])
+    ).order_by(Category.category_name.asc()).all()
+
+    charity_categories = Category.query.filter(
+        Category.category_type.in_(["charity", "both"])
+    ).order_by(Category.category_name.asc()).all()
 
     return render_template(
-        "organisation_details.html",
-        organisation=organisation,
-        reviews=reviews,
-        average_rating=average_rating,
-        total_reviews=total_reviews,
-        already_saved=already_saved
+        "register.html",
+        business_categories=business_categories,
+        charity_categories=charity_categories
     )
 
+@page_bp.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
 
-# ---------------------------------------------------------
-# Add rating/review
-# ---------------------------------------------------------
-@page_bp.route("/organisations/<int:organisation_id>/review", methods=["POST"])
-@login_required
-def add_review(organisation_id):
-    user_id = session.get("user_id")
-    rating = request.form.get("rating")
-    review_text = request.form.get("review_text")
+        user = User.query.filter_by(email=email).first()
 
-    if not rating:
-        flash("Rating is required.")
-        return redirect(url_for("page_bp.organisation_details", organisation_id=organisation_id))
+        if not user:
+            flash("Invalid email or password.")
+            return redirect(url_for("page_bp.login"))
 
-    rating = int(rating)
+        password_is_correct = False
 
-    if rating < 1 or rating > 5:
-        flash("Rating must be between 1 and 5.")
-        return redirect(url_for("page_bp.organisation_details", organisation_id=organisation_id))
+        # This handles properly hashed passwords
+        try:
+            password_is_correct = check_password_hash(user.password_hash, password)
+        except ValueError:
+            # This handles old imported demo passwords stored as plain text
+            password_is_correct = user.password_hash == password
 
-    # Check if this user already reviewed this organisation
-    existing_review = RatingReview.query.filter_by(
-        user_id=user_id,
-        organisation_id=organisation_id
-    ).first()
+        if not password_is_correct:
+            flash("Invalid email or password.")
+            return redirect(url_for("page_bp.login"))
 
-    if existing_review:
-        # Update existing review instead of creating a duplicate
-        existing_review.rating = rating
-        existing_review.review_text = review_text
-    else:
-        review = RatingReview(
-            organisation_id=organisation_id,
-            user_id=user_id,
-            rating=rating,
-            review_text=review_text
-        )
+        session["user_id"] = user.user_id
+        session["user_name"] = f"{user.first_name} {user.last_name}"
 
-        db.session.add(review)
+        flash("Login successful.")
+        return redirect(url_for("page_bp.explore"))
 
-    db.session.commit()
-
-    flash("Review saved successfully.")
-    return redirect(url_for("page_bp.organisation_details", organisation_id=organisation_id))
+    return render_template("login.html")
 
 
-# ---------------------------------------------------------
-# Save/bookmark organisation
-# ---------------------------------------------------------
-@page_bp.route("/organisations/<int:organisation_id>/save", methods=["POST"])
-@login_required
-def save_organisation(organisation_id):
-    user_id = session.get("user_id")
-
-    existing_save = SavedOrganisation.query.filter_by(
-        user_id=user_id,
-        organisation_id=organisation_id
-    ).first()
-
-    if existing_save:
-        flash("Organisation is already saved.")
-    else:
-        saved = SavedOrganisation(
-            user_id=user_id,
-            organisation_id=organisation_id
-        )
-
-        db.session.add(saved)
-        db.session.commit()
-
-        flash("Organisation saved.")
-
-    return redirect(url_for("page_bp.organisation_details", organisation_id=organisation_id))
+@page_bp.route("/logout")
+def logout():
+    session.clear()
+    flash("You have been logged out.")
+    return redirect(url_for("page_bp.login"))
 
 
-# ---------------------------------------------------------
-# Remove saved organisation
-# ---------------------------------------------------------
-@page_bp.route("/organisations/<int:organisation_id>/unsave", methods=["POST"])
-@login_required
-def unsave_organisation(organisation_id):
-    user_id = session.get("user_id")
+def login_required(route_function):
+    @wraps(route_function)
+    def wrapper(*args, **kwargs):
+        if not session.get("user_id"):
+            flash("Please log in first.")
+            return redirect(url_for("page_bp.login"))
 
-    saved = SavedOrganisation.query.filter_by(
-        user_id=user_id,
-        organisation_id=organisation_id
-    ).first()
+        return route_function(*args, **kwargs)
 
-    if saved:
-        db.session.delete(saved)
-        db.session.commit()
-        flash("Organisation removed from saved list.")
+    return wrapper
 
-    return redirect(url_for("page_bp.organisation_details", organisation_id=organisation_id))
-
-
-# ---------------------------------------------------------
-# View saved organisations
-# ---------------------------------------------------------
 @page_bp.route("/saved")
 @login_required
 def saved_organisations():

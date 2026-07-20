@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Sign Up</h1>
+<p>Select the type of account you want to create.</p>
+
+<div class="tabs">
+    <button type="button" class="tab-button active" onclick="showTab('general')">
+        General User
+    </button>
+
+    <button type="button" class="tab-button" onclick="showTab('business')">
+        Small Business
+    </button>
+
+    <button type="button" class="tab-button" onclick="showTab('charity')">
+        Charity
+    </button>
+</div>
+
+<!-- GENERAL USER FORM -->
+<div id="general" class="tab-content active">
+    <h2>General User Sign Up</h2>
+
+    <form method="POST">
+        <input type="hidden" name="account_type" value="general_user">
+
+        <label>First Name *</label>
+        <input type="text" name="first_name" required>
+
+        <label>Last Name *</label>
+        <input type="text" name="last_name" required>
+
+        <label>Email *</label>
+        <input type="email" name="email" required>
+
+        <label>Password *</label>
+        <input type="password" name="password" required>
+
+        <label>Confirm Password *</label>
+        <input type="password" name="confirm_password" required>
+
+        <button type="submit">Create General User Account</button>
+    </form>
+</div>
+
+<!-- BUSINESS USER FORM -->
+<div id="business" class="tab-content">
+    <h2>Small Business Sign Up</h2>
+
+    <form method="POST">
+        <input type="hidden" name="account_type" value="business_user">
+
+        <label>Owner Name *</label>
+        <input type="text" name="owner_name" required>
+
+        <label>Email *</label>
+        <input type="email" name="email" required>
+
+        <label>Password *</label>
+        <input type="password" name="password" required>
+
+        <label>Confirm Password *</label>
+        <input type="password" name="confirm_password" required>
+
+        <hr>
+
+        <label>Business Name *</label>
+        <input type="text" name="organisation_name" required>
+
+        <label>Business Contact Number</label>
+        <input type="text" name="phone">
+
+        <label>Street Address</label>
+        <input type="text" name="street_address">
+
+        <label>City / Town</label>
+        <input type="text" name="city_town">
+
+        <label>Parish</label>
+        <input type="text" name="parish">
+
+        <label>Categories *</label>
+        <div class="checkbox-box">
+            {% for category in business_categories %}
+                <label class="checkbox-label">
+                    <input type="checkbox" name="category_ids" value="{{ category.category_id }}">
+                    {{ category.category_name }}
+                </label>
+            {% endfor %}
+        </div>
+
+        <label>Business Description</label>
+        <textarea name="description" rows="4"></textarea>
+
+        <label>For More Information / Website</label>
+        <input type="text" name="website_url">
+
+        <button type="submit">Create Business Account</button>
+    </form>
+</div>
+
+<!-- CHARITY USER FORM -->
+<div id="charity" class="tab-content">
+    <h2>Charity User Sign Up</h2>
+
+    <form method="POST">
+        <input type="hidden" name="account_type" value="charity_user">
+
+        <label>Owner Name *</label>
+        <input type="text" name="owner_name" required>
+
+        <label>Email *</label>
+        <input type="email" name="email" required>
+
+        <label>Password *</label>
+        <input type="password" name="password" required>
+
+        <label>Confirm Password *</label>
+        <input type="password" name="confirm_password" required>
+
+        <hr>
+
+        <label>Charity / Project Name *</label>
+        <input type="text" name="organisation_name" required>
+
+        <label>Phone Number</label>
+        <input type="text" name="phone">
+
+        <label>Street Address</label>
+        <input type="text" name="street_address">
+
+        <label>City / Town</label>
+        <input type="text" name="city_town">
+
+        <label>Parish</label>
+        <input type="text" name="parish">
+
+        <label>Categories *</label>
+        <div class="checkbox-box">
+            {% for category in charity_categories %}
+                <label class="checkbox-label">
+                    <input type="checkbox" name="category_ids" value="{{ category.category_id }}">
+                    {{ category.category_name }}
+                </label>
+            {% endfor %}
+        </div>
+
+        <label>Purpose</label>
+        <textarea name="description" rows="4"></textarea>
+
+        <label>For More Information / Website</label>
+        <input type="text" name="website_url">
+
+        <button type="submit">Create Charity Account</button>
+    </form>
+</div>
+
+<script>
+    function showTab(tabName) {
+        // Hide all tab content
+        let contents = document.querySelectorAll(".tab-content");
+        contents.forEach(function(content) {
+            content.classList.remove("active");
+        });
+
+        // Remove active style from all buttons
+        let buttons = document.querySelectorAll(".tab-button");
+        buttons.forEach(function(button) {
+            button.classList.remove("active");
+        });
+
+        // Show selected tab
+        document.getElementById(tabName).classList.add("active");
+
+        // Highlight clicked button
+        event.target.classList.add("active");
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Saved Organisations</h1>
+
+{% if saved_records %}
+    {% for saved, organisation in saved_records %}
+        <div class="card">
+            <h3>{{ organisation.organisation_name }}</h3>
+            <p><strong>Type:</strong> {{ organisation.organisation_type }}</p>
+            <p>{{ organisation.description }}</p>
+
+            <a href="{{ url_for('page_bp.organisation_details', organisation_id=organisation.organisation_id) }}">
+                View Details
+            </a>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>You have not saved any organisations yet.</p>
+{% endif %}
+
+{% endblock %}

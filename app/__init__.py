@@ -2,6 +2,7 @@ from flask import Flask, jsonify
 from .config import Config
 from .extensions import db, migrate
 
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -9,6 +10,7 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
+    # API route files
     from app.routes.auth_routes import auth_bp
     from app.routes.organisation_routes import organisation_bp
     from app.routes.review_routes import review_bp
@@ -17,6 +19,9 @@ def create_app():
     from app.routes.message_routes import message_bp
     from app.routes.report_routes import report_bp
     from app.routes.admin_routes import admin_bp
+
+    # Basic Flask page routes
+    from app.routes.page_routes import page_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(organisation_bp, url_prefix="/api/organisations")
@@ -27,14 +32,14 @@ def create_app():
     app.register_blueprint(report_bp, url_prefix="/api/reports")
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
 
-    @app.route("/")
+    # Register normal webpage routes
+    app.register_blueprint(page_bp)
+
     @app.route("/api/health")
     def health_check():
         return jsonify(message="CivilInfoHub API is running")
 
     return app
 
-app = create_app()
 
-# Keep the original starter view helpers available.
-from app import views
+app = create_app()
