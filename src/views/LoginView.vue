@@ -1,4 +1,6 @@
+<!-- Purpose: Page-level login screen placeholder for the Vue frontend. -->
 <template>
+  <!-- Basic placeholder login form for the Vue version of the app. -->
   <div class="container">
     <h1>Login</h1>
     <p class="text-muted">Login page for general users, businesses, charities, and admins.</p>

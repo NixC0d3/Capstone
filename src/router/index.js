@@ -1,8 +1,11 @@
+// Purpose: Defines the URL paths for the frontend and maps each path to the correct view page.
 import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
 
 const router = createRouter({
+  // createWebHistory gives clean URLs such as /explore instead of hash URLs.
   history: createWebHistory(import.meta.env.BASE_URL),
+  // Each route controls what component is displayed for a specific browser URL.
   routes: [
     {
       path: "/",
@@ -12,6 +15,7 @@ const router = createRouter({
     {
       path: "/about",
       name: "about",
+      // Lazy import means this page loads only when the route is visited.
       component: () => import("../views/AboutView.vue")
     },
     {

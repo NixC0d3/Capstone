@@ -1,4 +1,6 @@
+<!-- Purpose: Reusable search/filter form for filtering organisations by search text and organisation type. -->
 <template>
+  <!-- When submitted, this form sends the filter values to its parent component. -->
   <form class="row g-2 mb-4" @submit.prevent="submitSearch">
     <div class="col-md-5">
       <input v-model="searchTerm" class="form-control" placeholder="Search businesses or charities" />
@@ -19,6 +21,9 @@
 </template>
 
 <script setup>
+// Reusable search/filter form for filtering organisations by search text and organisation type.
+// This component does not filter by itself. It emits the search values to its parent page.
+// searchTerm and organisationType are connected to the input/select using v-model.
 import { ref } from "vue";
 
 const emit = defineEmits(["search"]);

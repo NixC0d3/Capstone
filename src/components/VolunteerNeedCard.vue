@@ -1,4 +1,6 @@
+<!-- Purpose: Reusable card for displaying one volunteer need and emitting a signup action. -->
 <template>
+  <!-- Reusable card for displaying one volunteer need and emitting a signup action. -->
   <div class="card h-100">
     <div class="card-body">
       <h5 class="card-title">{{ need.title }}</h5>
@@ -13,6 +15,9 @@
 </template>
 
 <script setup>
+// Reusable card for displaying one volunteer need and emitting a signup action.
+// need is passed in from VolunteerOpportunitiesView.
+// The signup event tells the parent which volunteer opportunity was selected.
 defineProps({
   need: {
     type: Object,

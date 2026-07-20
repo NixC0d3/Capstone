@@ -1,4 +1,6 @@
+<!-- Purpose: Reusable message panel. It displays messages and emits a new message when the form is submitted. -->
 <template>
+  <!-- Reusable message panel. It displays messages and emits a new message when the form is submitted. -->
   <section class="card">
     <div class="card-header">Messages</div>
 
@@ -21,6 +23,10 @@
 </template>
 
 <script setup>
+// Reusable message panel. It displays messages and emits a new message when the form is submitted.
+// messages is passed from the parent component.
+// emit lets this child component tell the parent when a new message should be sent.
+// messageText stores what the user is typing before the message is submitted.
 import { ref } from "vue";
 
 defineProps({

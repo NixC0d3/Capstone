@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Explore Organisations</h1>
+
+<form method="GET" class="filter-form">
+    <label>Search</label>
+    <input type="text" name="search" value="{{ search }}" placeholder="Search by name or description">
+
+    <label>Organisation Type</label>
+    <select name="organisation_type">
+        <option value="">All</option>
+        <option value="business" {% if organisation_type == "business" %}selected{% endif %}>Business</option>
+        <option value="charity" {% if organisation_type == "charity" %}selected{% endif %}>Charity</option>
+    </select>
+
+    <label>Category</label>
+    <select name="category_id">
+        <option value="">All Categories</option>
+        {% for category in categories %}
+            <option value="{{ category.category_id }}"
+                {% if category_id|string == category.category_id|string %}selected{% endif %}>
+                {{ category.category_name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">Filter</button>
+    <a href="{{ url_for('page_bp.explore') }}">Clear Filters</a>
+</form>
+
+<hr>
+
+{% if organisations %}
+    <div class="organisation-grid">
+        {% for organisation in organisations %}
+            <div class="org-card">
+                <h3>{{ organisation.organisation_name }}</h3>
+
+                <p><strong>Type:</strong> {{ organisation.organisation_type }}</p>
+
+                {% if organisation.email %}
+                    <p><strong>Email:</strong> {{ organisation.email }}</p>
+                {% else %}
+                    <p><strong>Email:</strong> Not provided</p>
+                {% endif %}
+
+                {% if organisation.phone %}
+                    <p><strong>Phone:</strong> {{ organisation.phone }}</p>
+                {% else %}
+                    <p><strong>Phone:</strong> Not provided</p>
+                {% endif %}
+
+                <p>{{ organisation.description }}</p>
+
+                <div class="card-actions">
+                    <a class="button-link" href="{{ url_for('page_bp.organisation_details', organisation_id=organisation.organisation_id) }}">
+                        View Details
+                    </a>
+
+                    {% if session.get("user_id") %}
+                        {% if organisation.organisation_id in saved_ids %}
+                            <form method="POST" action="{{ url_for('page_bp.unsave_organisation', organisation_id=organisation.organisation_id) }}">
+                                <button type="submit">Remove Saved</button>
+                            </form>
+                        {% else %}
+                            <form method="POST" action="{{ url_for('page_bp.save_organisation', organisation_id=organisation.organisation_id) }}">
+                                <button type="submit">Save</button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <a class="button-link" href="{{ url_for('page_bp.login') }}">Login to Save</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No organisations found.</p>
+{% endif %}
+
+{% endblock %}

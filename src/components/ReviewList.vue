@@ -1,4 +1,6 @@
+<!-- Purpose: Reusable list that displays all reviews for an organisation. -->
 <template>
+  <!-- Reusable list that displays all reviews for an organisation. -->
   <section>
     <h5>Reviews</h5>
 
@@ -14,6 +16,8 @@
 </template>
 
 <script setup>
+// Reusable list that displays all reviews for an organisation.
+// reviews is passed in from OrganisationDetailsView.
 defineProps({
   reviews: {
     type: Array,

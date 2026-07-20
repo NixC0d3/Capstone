@@ -1,9 +1,12 @@
+<!-- Purpose: Page-level dashboard for businesses and charities to see stats and trend score. -->
 <script setup>
+// Page-level dashboard for businesses and charities to see stats and trend score.
 import DashboardStatsCard from "@/components/DashboardStatsCard.vue";
 import TrendScoreCard from "@/components/TrendScoreCard.vue";
 </script>
 
 <template>
+  <!-- Page-level dashboard for businesses and charities to see stats and trend score. -->
   <div class="container">
     <h1>Organisation Dashboard</h1>
     <p class="text-muted">Dashboard for businesses and charities.</p>

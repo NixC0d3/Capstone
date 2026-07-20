@@ -1,4 +1,8 @@
+<!-- Purpose: Page-level view used to demonstrate the trend score/monthly report calculation. -->
 <script setup>
+// Page-level view used to demonstrate the trend score/monthly report calculation.
+// result stores the calculated trend score returned from the Flask API.
+// calculateDemoReport sends sample engagement values to test the trend score endpoint.
 import { ref } from "vue";
 import TrendScoreCard from "@/components/TrendScoreCard.vue";
 import { api } from "@/services/api";
@@ -23,6 +27,7 @@ async function calculateDemoReport() {
 </script>
 
 <template>
+  <!-- Page-level view used to demonstrate the trend score/monthly report calculation. -->
   <div class="container">
     <h1>Monthly Report</h1>
     <p class="text-muted">Trend score and monthly performance report for an organisation.</p>

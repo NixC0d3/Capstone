@@ -1,4 +1,6 @@
+<!-- Purpose: Reusable footer shown at the bottom of the site. -->
 <template>
+  <!-- Simple shared footer. -->
       <footer class="mt-5">
           <div class="container">
               <p>Copyright &copy {{ year }} Flask Inc.</p>
@@ -7,6 +9,7 @@
 </template>
 
 <script setup>
+// Reusable footer shown at the bottom of the site.
 import { ref } from "vue";
 
 const year = (new Date).getFullYear();

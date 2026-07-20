@@ -1,5 +1,8 @@
+// Purpose: Central place for API calls to the Flask backend. Views call these functions instead of writing fetch code repeatedly.
+// VITE_API_BASE_URL can point Vue to Flask, for example http://localhost:5001/api.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
+// Small wrapper around fetch so all API requests handle JSON and errors consistently.
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
@@ -9,6 +12,7 @@ async function request(path, options = {}) {
     ...options
   });
 
+    // Some responses may not contain JSON, so return an empty object instead of crashing.
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
@@ -18,6 +22,7 @@ async function request(path, options = {}) {
   return data;
 }
 
+// These methods are imported by views/components when they need backend data.
 export const api = {
   getOrganisations() {
     return request("/organisations");

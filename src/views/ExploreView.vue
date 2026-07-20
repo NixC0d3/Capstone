@@ -1,4 +1,10 @@
+<!-- Purpose: Page-level view for listing, searching, and filtering organisations. -->
 <script setup>
+// Page-level view for listing, searching, and filtering organisations.
+// organisations stores the data loaded from the Flask API.
+// filters stores the current search and type filter selected by the user.
+// onMounted runs once when this page opens and loads organisation data from the backend.
+// filteredOrganisations is recalculated automatically when organisations or filters change.
 import { ref, computed, onMounted } from "vue";
 import SearchFilter from "@/components/SearchFilter.vue";
 import OrganisationCard from "@/components/OrganisationCard.vue";
@@ -33,6 +39,7 @@ function updateFilters(newFilters) {
 </script>
 
 <template>
+  <!-- SearchFilter controls the filters, and OrganisationCard displays each matching result. -->
   <div class="container">
     <h1>Explore Organisations</h1>
     <p class="text-muted">Search and filter businesses and charities.</p>

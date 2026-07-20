@@ -1,4 +1,8 @@
+<!-- Purpose: Page-level screen for displaying charity volunteer opportunities. -->
 <script setup>
+// Page-level screen for displaying charity volunteer opportunities.
+// needs stores volunteer opportunities loaded from the backend.
+// signup currently logs the selected need; later it can call a volunteer signup endpoint.
 import { ref, onMounted } from "vue";
 import VolunteerNeedCard from "@/components/VolunteerNeedCard.vue";
 import { api } from "@/services/api";
@@ -19,6 +23,7 @@ function signup(need) {
 </script>
 
 <template>
+  <!-- Page-level screen for displaying charity volunteer opportunities. -->
   <div class="container">
     <h1>Volunteer Opportunities</h1>
     <p class="text-muted">Charity volunteer needs and sign-up opportunities.</p>

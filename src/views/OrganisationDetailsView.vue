@@ -1,4 +1,10 @@
+<!-- Purpose: Page-level detail screen for one organisation, including reviews and messages. -->
 <script setup>
+// Page-level detail screen for one organisation, including reviews and messages.
+// route.params.id is the organisation ID from the URL, for example /organisations/5.
+// reviews and messages are kept as reactive arrays so the page updates when data changes.
+// handleReview currently logs review data; later it can call the Flask review endpoint.
+// handleMessage adds a temporary message to the local list for demo purposes.
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import ReviewForm from "@/components/ReviewForm.vue";
@@ -33,6 +39,7 @@ function handleMessage(messageText) {
 </script>
 
 <template>
+  <!-- This page combines details, review form, messages, and review list for one organisation. -->
   <div class="container">
     <h1>{{ organisation.organisation_name || "Organisation Details" }}</h1>
     <p class="text-muted">{{ organisation.organisation_type }}</p>

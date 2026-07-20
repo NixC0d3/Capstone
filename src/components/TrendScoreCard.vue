@@ -1,4 +1,6 @@
+<!-- Purpose: Reusable card for displaying the trend score and trend status of an organisation. -->
 <template>
+  <!-- Reusable card for displaying the trend score and trend status of an organisation. -->
   <div class="card h-100">
     <div class="card-body">
       <h5 class="card-title">Trend Score</h5>
@@ -9,6 +11,8 @@
 </template>
 
 <script setup>
+// Reusable card for displaying the trend score and trend status of an organisation.
+// trendScore and status are props so this card can be reused on dashboards and reports.
 defineProps({
   trendScore: {
     type: Number,

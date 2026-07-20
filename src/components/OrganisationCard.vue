@@ -1,4 +1,6 @@
+<!-- Purpose: Reusable card for showing one business or charity in a list/grid. -->
 <template>
+  <!-- Displays basic organisation data inside a reusable Bootstrap card. -->
   <div class="card h-100">
     <div class="card-body">
       <h5 class="card-title">{{ organisation.organisation_name || organisation.name || "Organisation" }}</h5>
@@ -16,6 +18,8 @@
 </template>
 
 <script setup>
+// Reusable card for showing one business or charity in a list/grid.
+// organisation is passed in from a parent view such as ExploreView.
 import { RouterLink } from "vue-router";
 
 defineProps({

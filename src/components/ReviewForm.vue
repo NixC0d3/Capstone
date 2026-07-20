@@ -1,4 +1,6 @@
+<!-- Purpose: Reusable review form. It collects a rating and review text, then sends that data to the parent view. -->
 <template>
+  <!-- Form is prevented from refreshing the page; submitReview handles the data. -->
   <form class="card card-body" @submit.prevent="submitReview">
     <h5>Add a Review</h5>
 
@@ -17,6 +19,9 @@
 </template>
 
 <script setup>
+// Reusable review form. It collects a rating and review text, then sends that data to the parent view.
+// emit sends the completed review back to the parent view.
+// rating and reviewText are reactive variables connected to the form fields with v-model.
 import { ref } from "vue";
 
 const emit = defineEmits(["submit-review"]);

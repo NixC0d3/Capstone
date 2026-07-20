@@ -1,0 +1,231 @@
+\<!DOCTYPE html>
+<html>
+<head>
+    <title>CivilInfoHub</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0 30px;
+            background-color: #f5f5f5;
+        }
+
+        nav {
+            background-color: #1f4e79;
+            padding: 12px;
+            margin: 0 -30px 25px -30px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+        }
+
+        .message {
+            background: #fff3cd;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ffeeba;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            background-color: white;
+        }
+
+        input, select, textarea {
+            display: block;
+            width: 100%;
+            max-width: 500px;
+            padding: 8px;
+            margin-bottom: 12px;
+        }
+
+        button {
+            background-color: #1f4e79;
+            color: white;
+            padding: 8px 14px;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #163852;
+        }
+
+		.tabs {
+			display: flex;
+    	    gap: 8px;
+            margin-bottom: 20px;
+        }
+
+		.tab-button {
+			background-color: #ddd;
+			color: #333;
+            padding: 10px 16px;
+            border: 1px solid #aaa;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+		.tab-button.active {
+            background-color: #1f4e79;
+            color: white;
+		}
+
+		.tab-content {
+			display: none;
+            border: 1px solid #ddd;
+            padding: 20px;
+            background: white;
+            border-radius: 6px;
+		}
+
+		.tab-content.active {
+       	    display: block;
+		}
+
+		.checkbox-box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            max-width: 500px;
+            max-height: 180px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            background-color: #fafafa;
+		}
+
+		.checkbox-label {
+            display: block;
+            margin-bottom: 6px;
+		}
+	
+		.checkbox-label input {
+            width: auto;
+            display: inline;
+            margin-right: 8px;
+		}
+
+		.login-box {
+			border: 1px solid #ddd;
+            padding: 25px;
+            max-width: 450px;
+            background: white;
+            border-radius: 6px;
+		}
+    
+		/* Organisation grid used on Explore and Saved pages */
+		.organisation-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+			gap: 15px;
+		}	
+
+		.org-card {
+			border: 1px solid #ddd;
+			padding: 15px;
+			border-radius: 6px;
+			background: white;
+		}
+	
+		.card-actions {
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+			align-items: center;
+			margin-top: 10px;
+		}
+
+		.button-link {
+			display: inline-block;
+			background-color: #1f4e79;
+			color: white;
+			padding: 8px 14px;
+			text-decoration: none;
+			border-radius: 2px;
+		}
+
+		.button-link:hover {
+			background-color: #163852;
+		}
+
+		/* Star rating CSS */
+		.star-rating {
+			display: inline-flex;
+			flex-direction: row-reverse;
+			justify-content: flex-end;
+			gap: 4px;
+			margin-bottom: 12px;
+		}
+
+		.star-rating input {
+			display: none;
+		}
+
+		.star-rating label {
+			font-size: 32px;
+			color: #ccc;
+			cursor: pointer;
+		}
+
+		/* Highlight stars when hovering */
+		.star-rating label:hover,
+		.star-rating label:hover ~ label {
+			color: #f5b301;
+		}
+
+		/* Keep selected stars highlighted */
+		.star-rating input:checked ~ label {
+			color: #f5b301;
+		}
+
+		.filter-form {
+			margin-bottom: 15px;
+		}
+
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="{{ url_for('page_bp.explore') }}">Explore</a>
+        <a href="{{ url_for('page_bp.saved_organisations') }}">Saved</a>
+
+        {% if session.get("user_id") %}
+            <span style="color:white;">Logged in as {{ session.get("user_name") }}</span>
+            <a href="{{ url_for('page_bp.logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('page_bp.login') }}">Login</a>
+            <a href="{{ url_for('page_bp.register') }}">Register</a>
+        {% endif %}
+    </nav>
+
+    <div class="container">
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+
+    </div>
+
+</body>
+</html>
+

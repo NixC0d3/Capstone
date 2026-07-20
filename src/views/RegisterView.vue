@@ -1,4 +1,6 @@
+<!-- Purpose: Page-level registration screen placeholder for the Vue frontend. -->
 <template>
+  <!-- Basic placeholder registration form for the Vue version of the app. -->
   <div class="container">
     <h1>Create Account</h1>
     <p class="text-muted">Register as a general user, business user, charity user, or admin.</p>

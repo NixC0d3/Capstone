@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Saved Organisations</h1>
+
+{% if saved_records %}
+    <div class="organisation-grid">
+        {% for saved, organisation in saved_records %}
+            <div class="org-card">
+                <h3>{{ organisation.organisation_name }}</h3>
+                <p><strong>Type:</strong> {{ organisation.organisation_type }}</p>
+
+                {% if organisation.email %}
+                    <p><strong>Email:</strong> {{ organisation.email }}</p>
+                {% else %}
+                    <p><strong>Email:</strong> Not provided</p>
+                {% endif %}
+
+                {% if organisation.phone %}
+                    <p><strong>Phone:</strong> {{ organisation.phone }}</p>
+                {% else %}
+                    <p><strong>Phone:</strong> Not provided</p>
+                {% endif %}
+
+                <p>{{ organisation.description }}</p>
+
+                <div class="card-actions">
+                    <a class="button-link" href="{{ url_for('page_bp.organisation_details', organisation_id=organisation.organisation_id) }}">
+                        View Details
+                    </a>
+
+                    <form method="POST" action="{{ url_for('page_bp.unsave_organisation', organisation_id=organisation.organisation_id) }}">
+                        <button type="submit">Remove Saved</button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>You have not saved any organisations yet.</p>
+{% endif %}
+
+{% endblock %}

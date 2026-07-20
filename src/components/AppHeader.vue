@@ -1,4 +1,6 @@
+<!-- Purpose: Reusable navigation bar shown at the top of the site. -->
 <template>
+  <!-- Main navigation links for moving between views. -->
   <header>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
       <div class="container-fluid">
@@ -38,5 +40,10 @@
 </template>
 
 <script setup>
+<<<<<<< Updated upstream
 import { RouterLink } from "vue-router";
+=======
+// Reusable navigation bar shown at the top of the site.
+import { RouterLink } from 'vue-router'
+>>>>>>> Stashed changes
 </script>

@@ -1,4 +1,8 @@
+<!-- Purpose: Page-level view for admin controls, including trend score weights. -->
 <script setup>
+// Page-level view for admin controls, including trend score weights.
+// settings stores the admin-controlled trend score weights from the backend.
+// saveSettings sends updated weights back to the Flask API.
 import { ref, onMounted } from "vue";
 import { api } from "@/services/api";
 
@@ -22,6 +26,7 @@ async function saveSettings() {
 </script>
 
 <template>
+  <!-- Page-level view for admin controls, including trend score weights. -->
   <div class="container">
     <h1>Admin Dashboard</h1>
     <p class="text-muted">Admin-controlled weights for the trend score algorithm.</p>

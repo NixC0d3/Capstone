@@ -1,4 +1,6 @@
+<!-- Purpose: Page-level landing/home screen for the project. -->
 <script setup>
+// Page-level landing/home screen for the project.
 import { ref } from "vue";
 
 let message = ref("Hello World! This is a VueJS and Flask Starter Template.")
@@ -6,6 +8,7 @@ let message = ref("Hello World! This is a VueJS and Flask Starter Template.")
 </script>
 
 <template>
+  <!-- Page-level landing/home screen for the project. -->
     <div class="container">
       <div class="text-center">
         <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
