@@ -247,23 +247,36 @@ def register():
 @page_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
+        login_value = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "").strip()
 
-        user = User.query.filter_by(email=email).first()
+        # First try normal email login
+        user = User.query.filter(
+            db.func.lower(User.email) == login_value
+        ).first()
+
+        # If the user typed only a username like gen10, bus1000, or char2000,
+        # try to find the demo email created by the import script.
+        if not user and "@" not in login_value:
+            user = User.query.filter(
+                User.email.ilike(f"{login_value}.%@civilinfohub.test")
+            ).first()
 
         if not user:
             flash("Invalid email or password.")
             return redirect(url_for("page_bp.login"))
 
+        # Imported Excel users may have plain demo passwords.
+        # Newly registered users have hashed passwords.
         password_is_correct = False
 
-        # This handles properly hashed passwords
-        try:
-            password_is_correct = check_password_hash(user.password_hash, password)
-        except ValueError:
-            # This handles old imported demo passwords stored as plain text
-            password_is_correct = user.password_hash == password
+        if user.password_hash == password:
+            password_is_correct = True
+        else:
+            try:
+                password_is_correct = check_password_hash(user.password_hash, password)
+            except ValueError:
+                password_is_correct = False
 
         if not password_is_correct:
             flash("Invalid email or password.")
@@ -276,7 +289,6 @@ def login():
         return redirect(url_for("page_bp.explore"))
 
     return render_template("login.html")
-
 
 @page_bp.route("/logout")
 def logout():
