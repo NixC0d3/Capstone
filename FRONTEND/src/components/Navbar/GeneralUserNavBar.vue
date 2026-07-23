@@ -23,7 +23,7 @@
     <div class="user-actions">
 
         <button class="profile-button" @click="goProfile">
-            P
+            {{ initials }}
         </button>
 
         <button class="logout-button" @click="logout">
@@ -36,7 +36,27 @@
 
 <script setup>
 import { useRouter } from "vue-router";
+import { computed } from "vue";
 const router = useRouter();
+
+const user = JSON.parse(
+    localStorage.getItem("user")
+);
+
+const initials = computed(()=>{
+    if(!user){
+        return "U";
+    }
+
+    const first =
+    user.first_name?.charAt(0) || "";
+
+    const last =
+    user.last_name?.charAt(0) || "";
+
+    return (first + last).toUpperCase();
+});
+
 
 function goProfile(){
     router.push("/generaluser/profile");
@@ -44,7 +64,7 @@ function goProfile(){
 
 function logout(){
     // later this will clear authentication
-    console.log("Logging out");
+    localStorage.removeItem("user");
     router.push("/login");
 }
 </script>

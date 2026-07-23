@@ -1,14 +1,12 @@
 <template>
 
 <div class="profile-page">
-
     <div class="profile-header">
+        <div class="avatar"> {{initials}} </div>
 
-        <div class="avatar">P</div>
+        <h1>{{ user.first_name }} {{ user.last_name }}</h1>
 
-        <h1>John Doe</h1>
-
-        <p>john@email.com</p>
+        <p> {{user.email}}</p>
 
     </div>
 
@@ -45,17 +43,17 @@
     </div>
 
     <div class="content">
-
         <div v-if="currentTab === 'saved'">
-
             <h2>Saved Organisations</h2>
 
             <ul>
-                <li>Island Coffee House</li>
-                <li>Hope Jamaica Foundation</li>
-                <li>Green Earth Jamaica</li>
+                <li
+                v-for="organisation in savedOrganisations"
+                :key="organisation.organisation_id"
+                >
+                    {{ organisation.organisation_name }}
+                </li>
             </ul>
-
         </div>
 
 
@@ -63,9 +61,19 @@
 
             <h2>Inbox</h2>
 
-            <p>Green Earth: Thank you for your support!</p>
-
-            <p>Hope Jamaica: Volunteer event this Saturday.</p>
+            <div
+            v-for="message in messages"
+            :key="message.message_id"
+            >
+                <p>
+                    <strong>
+                        {{ message.organisation_name }}
+                    </strong>
+                </p>
+                <p>
+                    {{ message.message_text }}
+                </p>
+            </div>
 
         </div>
 
@@ -74,12 +82,20 @@
 
             <h2>Volunteer Allocations</h2>
 
-            <p>Hope Jamaica Foundation</p>
-
-            <p>Food Distribution</p>
-
-            <p>12 December 2025</p>
-
+            <div
+            v-for="allocation in volunteerAllocations"
+            :key="allocation.id"
+            >
+                <p>
+                    {{ allocation.organisation_name }}
+                </p>
+                <p>
+                    {{ allocation.event_name }}
+                </p>
+                <p>
+                    {{ allocation.date }}
+                </p>
+            </div>
         </div>
 
 
@@ -100,9 +116,55 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed} from "vue";
 
 const currentTab = ref("saved");
+
+// temporary user data
+// later comes from API
+const user = ref({
+    first_name:"John",
+    last_name:"Doe",
+    email:"john@email.com"
+});
+
+const savedOrganisations = ref([
+    {
+        organisation_id:1,
+        organisation_name:"Green Earth Jamaica"
+    },
+    {
+        organisation_id:2,
+        organisation_name:"Hope Jamaica Foundation"
+    }
+]);
+
+const messages = ref([
+    {
+        message_id:1,
+        organisation_name:"Green Earth Jamaica",
+        message_text:"Thank you for your support!"
+    }
+]);
+
+const volunteerAllocations = ref([
+    {
+        id:1,
+        organisation_name:"Hope Jamaica Foundation",
+        event_name:"Food Distribution",
+        date:"12 December 2025"
+    }
+]);
+
+const initials = computed(()=>{
+
+    return (
+        user.value.first_name[0] +
+        user.value.last_name[0]
+    ).toUpperCase();
+
+});
+
 </script>
 
 <style scoped>
