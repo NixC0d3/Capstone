@@ -6,9 +6,8 @@ class="card"
 >
     <!-- Image -->
     <img
-    v-if="organisation.image"
-    :src="organisation.image"
-    class="org-image"
+        :src="organisation.image || 'https://placehold.co/300x200'"
+        class="org-image"
     />
 
     <div class="card-content">
@@ -27,7 +26,7 @@ class="card"
 
 
         <div class="category">
-            {{ organisation.organisation_type }}
+            {{ organisation.category_name }}
         </div>
 
         <div class="rating">
@@ -35,7 +34,12 @@ class="card"
         </div>
 
         <p class="location">
-            📍 {{ organisation.location }}
+            📍 
+            {{
+                organisation.town && organisation.parish
+                ? `${organisation.town}, ${organisation.parish}`
+                : "Location unavailable"
+            }}
         </p>
 
         <p class="description">
@@ -58,10 +62,10 @@ const props = defineProps({
 });
 
 function openOrganization() {
-    router.push(`/organization/${props.organisation.organisation_id}`)
+    router.push(`/organisation/${props.organisation.organisation_id}`)
 }
 function saveOrg() {
-    console.log("Saved organisation:", props.organisation.organisation_name);
+    console.log("Saved:", props.organisation.organisation_name);
 }
 </script>
 

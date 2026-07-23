@@ -19,9 +19,7 @@
             Search Results
         </h2>
 
-
         <div v-if="searchResults.length" class="charity-list">
-
 
             <CharityCard
                 v-for="charity in searchResults"
@@ -29,142 +27,82 @@
                 :charity="charity"
             />
 
-
         </div>
-
-
         <p v-else>
             No charities found.
         </p>
 
-
     </div>
 
-
-
     <div v-else>
-
-
         <h2>
             Recommended Charities
         </h2>
 
-
         <div class="charity-list">
-
-
             <CharityCard
-                v-for="charity in recommendedCharities"
-                :key="charity.id"
+                v-for="charity in charities"
+                :key="charity.organisation_id"
                 :charity="charity"
             />
 
-
         </div>
-
 
     </div>
 
-
 </div>
-
 
 </template>
 
-
-
 <script setup>
 
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 
 import SearchBar from "@/components/SearchBar.vue";
 import CharityCard from "@/components/CharityCard.vue";
+import { api } from "@/services/api";
 
-
-
-const recommendedCharities = ref([
-
-    {
-        id:1,
-        name:"Green Earth Jamaica",
-        category:"Environment",
-        rating:4.8,
-        location:"Kingston",
-        description:
-        "Supporting environmental projects and protecting local communities."
-    },
-
-
-    {
-        id:2,
-        name:"Youth Forward Foundation",
-        category:"Education",
-        rating:4.9,
-        location:"St. Catherine",
-        description:
-        "Helping young people gain skills and educational opportunities."
-    },
-
-
-    {
-        id:3,
-        name:"Hope Community Centre",
-        category:"Community",
-        rating:4.7,
-        location:"St. Ann",
-        description:
-        "Providing support services for families and vulnerable groups."
-    }
-
-
-]);
-
-
-
+const charities = ref([]);
 const searchResults = ref([]);
-
 const hasSearched = ref(false);
 
 
-
 function searchCharities(filters){
-
-
     hasSearched.value = true;
 
-
     searchResults.value =
-    recommendedCharities.value.filter(charity => {
-
+    charities.value.filter(charity=>{
 
         const matchesName =
-        charity.name
+        charity.organisation_name
         .toLowerCase()
         .includes(filters.searchTerm.toLowerCase());
 
-
-
         const matchesCategory =
         !filters.category ||
-        charity.category === filters.category;
-
-
+        charity.category_name === filters.category;
 
         const matchesLocation =
         !filters.location ||
-        charity.location === filters.location;
-
-
+        charity.parish === filters.location;
 
         return matchesName 
         && matchesCategory 
         && matchesLocation;
-
-
     });
-
-
 }
+
+onMounted(async()=>{
+    try{
+        const organisations = await api.getOrganisations();
+        charities.value = organisations.filter(
+            organisation =>
+            organisation.organisation_type === "charity"
+        );
+    }catch(error){
+        console.error(error);
+    }
+});
 
 
 </script>

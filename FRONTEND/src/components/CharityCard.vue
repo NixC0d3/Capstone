@@ -1,32 +1,32 @@
 <template>
 
 <div class="charity-card">
-
-
-    <span class="category">
-        {{ charity.category }}
+    <span 
+    v-if="charity.organisation_type === 'charity'"
+    class="category"
+    >
+        {{ charity.category_name}}
     </span>
 
-
     <h2>
-        {{ charity.name }}
+        {{ charity.organisation_name }}
     </h2>
 
-
     <div class="rating">
-        ⭐ {{ charity.rating }}
+        ⭐ {{ charity.rating || "No ratings yet" }}
     </div>
 
-
     <p class="location">
-        📍 {{ charity.location }}
+        📍 
+        {{ charity.town && charity.parish 
+            ? `${charity.town}, ${charity.parish}` 
+            : "Location unavailable"
+        }}
     </p>
-
 
     <p class="description">
         {{ charity.description }}
     </p>
-
 
     <div class="actions">
 
@@ -34,16 +34,13 @@
             Donate
         </button>
 
-
         <button 
         class="learn"
         @click="learnMore"
         >
             Learn More
         </button>
-
     </div>
-
 
 </div>
 
@@ -53,42 +50,29 @@
 <script setup>
 
 import { useRouter } from "vue-router";
-
-
 const router = useRouter();
 
-
 const props = defineProps({
-
     charity:{
         type:Object,
         required:true
     }
-
 });
 
 
 function learnMore(){
-
-    router.push(`/organisation/${props.charity.id}`);
-
+    router.push(`/organisation/${props.charity.organisation_id}`);
 }
-
 
 </script>
 
 
 <style scoped>
 
-
 .charity-card{
-
     background:white;
-
     width:600px;
-
     padding:30px;
-
     border-radius:18px;
     box-shadow:0 10px 25px rgba(0,0,0,.08);
     margin-bottom:25px;

@@ -1,130 +1,214 @@
 <template>
-  <div class="page">
 
-    <button class="back-btn" @click="$router.back()">
-      ← Back
-    </button>
+<div class="page">
 
+  <button class="back-btn" @click="$router.back()">
+    ← Back
+  </button>
+
+  <div v-if="loading">
+    Loading organisation...
+  </div>
+
+  <div v-else>
     <div class="hero">
-
       <img
         class="hero-image"
-        src="https://placehold.co/500x300"
-        alt="Organization"
-      />
-
-    </div>
+        :src="organisation.image || 'https://placehold.co/500x300'"
+        alt="Organisation"
+        />
+     </div>
 
     <div class="content">
+      <!-- LEFT SIDE -->
 
-      <!-- LEFT -->
+    <div class="left">
+      <div class="tags">
+        <span>
+          {{ organisation.organisation_type }}
+         </span>
 
-      <div class="left">
-
-        <div class="tags">
-          <span>Technology</span>
-          <span>Retail</span>
-        </div>
-
-        <h1>CablePro Data Servs Ltd</h1>
-
-        <div class="rating">
-
-          ★★★★☆ <span>(4.6 · 28 reviews)</span>
-
-        </div>
-
-        <div class="location">
-
-          📍 6 Cairo Street, Portmore, St. Catherine
-
-        </div>
-
-        <hr>
-
-        <h2>About</h2>
-
-        <p>
-
-          CablePro Data Services has been providing technology
-          solutions including networking, surveillance cameras,
-          computer systems, software development, and IT support.
-
-          We work with businesses and community organizations to
-          deliver reliable digital solutions while supporting local
-          economic growth.
-
-        </p>
-
-        <hr>
-
-        <h2>Reviews</h2>
-
-        <div class="review">
-
-          <strong>★★★★★ John Brown</strong>
-
-          <p>
-            Excellent customer service and quick installation.
-          </p>
-
-        </div>
-
-        <div class="review">
-
-          <strong>★★★★☆ Sarah Williams</strong>
-
-          <p>
-            Very knowledgeable staff.
-          </p>
-
-        </div>
+        <span v-if="organisation.category">
+          {{ organisation.category_name }}
+        </span>
 
       </div>
 
-      <!-- RIGHT -->
+      <h1>
+        {{ organisation.organisation_name }}
+      </h1>
 
-      <div class="sidebar">
+      <div class="rating">
+        ⭐ 
+        {{ organisation.rating || "No ratings yet" }}
+      </div>
 
-        <button class="save-btn">
+      <div class="location">
+        📍
+        {{
+        organisation.address
+        ?
+        organisation.address
+        :
+        organisation.town && organisation.parish
+        ?
+        `${organisation.town}, ${organisation.parish}`
+        :
+        "Location unavailable"
+        }}
+      </div>
 
-          ❤️ Save
+      <hr>
 
-        </button>
+        <h2>
+          About
+        </h2>
 
-        <button class="contact-btn">
+        <p>
+          {{ organisation.description }}
+        </p>
+      <hr>
 
-          Get in Touch
+      <h2>
+         Reviews
+      </h2>
 
-        </button>
+      <div
+        v-if="reviews.length"
+      >
 
-        <div class="info">
+      <div
+        class="review"
+        v-for="review in reviews"
+        :key="review.review_id"
+      >
 
-          <h3>Opening Hours</h3>
+      <strong>
+        ⭐ {{ review.rating }}
+      </strong>
 
-          <p>Mon–Fri</p>
+      <p>
+        {{ review.review_text }}
+      </p>
 
-          <p>8:30 AM – 5:00 PM</p>
+    </div>
 
-          <br>
+   </div>
 
-          <h3>Location</h3>
-          <p>6 Cairo Street</p>
-          <p>Portmore</p>
-          <p>St. Catherine</p>
-          <br>
-          <h3>Phone</h3>
-          <p>(876) 939-3852</p>
-          <br>
-          <h3>Website</h3>
-          <a href="#">
-            www.cableprodataservices.com
-          </a>
-        </div>
+    <p v-else>
+      No reviews yet.
+    </p>
+
+  </div>
+
+  <!-- RIGHT SIDE -->
+  <div class="sidebar">
+    <div class="top-actions">
+      <button class="save-btn" @click="saveOrganisation">
+        ❤️ Save
+      </button>
+
+      <button 
+        class="message-btn"
+        @click="openMessages"
+        >
+          ✉
+      </button>
+    </div>
+      <!-- BUSINESS ONLY -->
+      <button
+      v-if="organisation.organisation_type === 'business'"
+      class="contact-btn"
+      >
+        Get in Touch
+      </button>
+
+      <!-- CHARITY ONLY -->
+      <button
+        v-if="organisation.organisation_type === 'charity'"
+        class="donate-btn"
+      >
+        Donate
+      </button>
+
+      <div class="info">
+        <h3>
+          Contact
+        </h3>
+
+        <p>
+          {{ organisation.phone || "No phone available" }}
+        </p>
+
+        <p>
+          {{ organisation.email || "No email available" }}
+        </p>
+
+        <h3>
+          Website
+        </h3>
+
+        <a
+          v-if="organisation.website_url"
+          :href="organisation.website_url"
+          target="_blank"
+        >
+          {{ organisation.website_url }}
+        </a>
+        <p v-else>
+          No website available
+        </p>
       </div>
     </div>
   </div>
+  </div>
+</div>
+
 </template>
+
+
+
+<script setup>
+
+import { ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { api } from "@/services/api";
+
+const route = useRoute();
+const organisation = ref({});
+const reviews = ref([]);
+const loading = ref(true);
+
+onMounted(async()=>{
+  try{
+    organisation.value =
+    await api.getOrganisation(
+    route.params.id
+  );
+  // later this will come from reviews table
+  reviews.value = organisation.value.reviews || [];
+
+  }catch(error){
+    console.error(error);
+  }finally{
+    loading.value = false;
+  }
+});
+
+function saveOrganisation(){
+  console.log(
+    "Saved:", organisation.value.organisation_name
+  );
+}
+
+function openMessages(){
+    console.log(
+        "Opening messages with:",
+        organisation.value.organisation_name
+    );
+}
+
+</script>
 
 <style scoped>
 
@@ -224,22 +308,48 @@ p{
   box-shadow:0 10px 30px rgba(0,0,0,.08);
 }
 
-.save-btn,
-.contact-btn{
-  width:100%;
+.top-actions{
+  display:flex;
+  gap:10px;
   margin-bottom:15px;
+}
+
+.save-btn{
+  flex:1;
   padding:14px;
   border:none;
   border-radius:10px;
   background:#8B5A3C;
   color:white;
   cursor:pointer;
-  font-size:15px;
+}
 
+.message-btn{
+  width:55px;
+  border:none;
+  border-radius:10px;
+  background:white;
+  color:#8B5A3C;
+  font-size:22px;
+  cursor:pointer;
+  box-shadow:0 5px 15px rgba(0,0,0,.1);
+}
+
+.contact-btn,
+.donate-btn{
+  width:100%;
+  padding:14px;
+  margin-bottom:15px;
+  border:none;
+  border-radius:10px;
+  background:#8B5A3C;
+  color:white;
+  cursor:pointer;
 }
 
 .save-btn:hover,
-.contact-btn:hover{
+.contact-btn:hover,
+.donate-btn:hover{
   background:#74482D;
 }
 
