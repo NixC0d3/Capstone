@@ -19,10 +19,7 @@
             Saved
         </button>
 
-        <button
-            :class="{ active: currentTab === 'inbox' }"
-            @click="currentTab = 'inbox'"
-        >
+        <button @click="goInbox">
             Inbox
         </button>
 
@@ -117,8 +114,14 @@
 
 <script setup>
 import { ref, computed} from "vue";
-
 const currentTab = ref("saved");
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
+function goInbox() {
+    router.push("/generaluser/inbox");
+}
 
 // temporary user data
 // later comes from API
@@ -136,14 +139,6 @@ const savedOrganisations = ref([
     {
         organisation_id:2,
         organisation_name:"Hope Jamaica Foundation"
-    }
-]);
-
-const messages = ref([
-    {
-        message_id:1,
-        organisation_name:"Green Earth Jamaica",
-        message_text:"Thank you for your support!"
     }
 ]);
 

@@ -171,10 +171,11 @@
 <script setup>
 
 import { ref, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { api } from "@/services/api";
 
 const route = useRoute();
+const router = useRouter();
 const organisation = ref({});
 const reviews = ref([]);
 const loading = ref(true);
@@ -202,10 +203,12 @@ function saveOrganisation(){
 }
 
 function openMessages(){
-    console.log(
-        "Opening messages with:",
-        organisation.value.organisation_name
-    );
+  router.push({
+    path: "/generaluser/inbox",
+    query:{
+      organisation: organisation.value.organisation_id
+    }
+  });
 }
 
 </script>

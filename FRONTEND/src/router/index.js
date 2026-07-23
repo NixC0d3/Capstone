@@ -9,7 +9,7 @@ import GeneralUserProfile from "@/views/general-user/GeneralUserProfile.vue";
 import GeneralUserCharity from "@/views/general-user/GeneralUserCharity.vue";
 
 import OrgView from "@/views/general-user/OrgView.vue";
-
+import Inbox from "@/views/Inbox.vue";
 const router = createRouter({
 
   history: createWebHistory(),
@@ -45,7 +45,10 @@ const router = createRouter({
       path: "/generaluser/profile",
       component: GeneralUserProfile
     },
-
+    {
+      path: "/generaluser/inbox",
+      component: Inbox
+    },
     {
       path: "/about",
       component: About
