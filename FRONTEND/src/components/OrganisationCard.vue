@@ -1,27 +1,99 @@
 <template>
-  <div class="card h-100">
-    <div class="card-body">
-      <h5 class="card-title">{{ organisation.organisation_name || organisation.name || "Organisation" }}</h5>
-      <p class="card-text text-muted">{{ organisation.organisation_type || "business/charity" }}</p>
-      <p class="card-text">{{ organisation.description || "No description available yet." }}</p>
-      <RouterLink
-        v-if="organisation.organisation_id"
-        class="btn btn-primary btn-sm"
-        :to="`/organisations/${organisation.organisation_id}`"
-      >
-        View Details
-      </RouterLink>
+
+<div 
+class="card"
+@click="openOrganization"
+>
+    <!-- Image -->
+    <img
+    v-if="organisation.image"
+    :src="organisation.image"
+    class="org-image"
+    />
+
+    <div class="card-content">
+        <div class="header">
+            <h3>
+                {{ organisation.organisation_name }}
+            </h3>
+
+            <button
+            class="heart"
+            @click.stop="saveOrg"
+            >
+            ♡
+            </button>
+        </div>
+
+
+        <div class="category">
+            {{ organisation.organisation_type }}
+        </div>
+
+        <div class="rating">
+            ⭐ {{ organisation.rating || "No ratings yet" }}
+        </div>
+
+        <p class="location">
+            📍 {{ organisation.location }}
+        </p>
+
+        <p class="description">
+            {{ organisation.description }}
+        </p>
+
     </div>
-  </div>
+</div>
 </template>
 
 <script setup>
-import { RouterLink } from "vue-router";
+import { useRouter } from "vue-router"
+const router = useRouter()
 
-defineProps({
-  organisation: {
-    type: Object,
-    required: true
-  }
+const props = defineProps({
+    organisation: {
+        type: Object,
+        required: true
+    }
 });
+
+function openOrganization() {
+    router.push(`/organization/${props.organisation.organisation_id}`)
+}
+function saveOrg() {
+    console.log("Saved organisation:", props.organisation.organisation_name);
+}
 </script>
+
+
+<style scoped>
+
+.card{
+    background:white;
+    padding:25px;
+    border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+}
+
+
+h3{
+    color:#2C2C2C;
+}
+
+p{
+    color:#666;
+}
+
+.description{
+    min-height:50px;
+}
+
+button{
+    background:#8B5A3C;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:10px;
+}
+
+</style>

@@ -20,18 +20,11 @@ async function request(path, options = {}) {
 
 export const api = {
   getOrganisations() {
-    return request("/api/organisations");
+    return request("/organisations");
   },
 
   getOrganisation(id) {
     return request(`/organisations/${id}`);
-  },
-
-  registerUser(payload){
-    return request("/auth/register", {
-      method:"POST",
-      body:JSON.stringify(payload)
-    });
   },
 
   getRecommendations(userId) {

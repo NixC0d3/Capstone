@@ -1,21 +1,22 @@
-<script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import AppHeader from "@/components/AppHeader.vue";
-import AppFooter from "@/components/AppFooter.vue";
-</script>
-
 <template>
-  <AppHeader />
-
-  <main>
-    <RouterView />
-  </main>
-  
-  <AppFooter />
+  <Navbar v-if="showNavbar" />
+  <router-view />
 </template>
 
-<style>
-body {
-  padding-top: 75px;
-}
-</style>
+
+<script setup>
+
+import { computed } from "vue";
+import { useRoute } from "vue-router";
+
+import Navbar from "@/components/Navbar/GeneralUserNavBar.vue";
+
+
+const route = useRoute();
+
+const showNavbar = computed(() => {
+  return route.path !== "/login"
+      && route.path !== "/signup";
+});
+
+</script>
