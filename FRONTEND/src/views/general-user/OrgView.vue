@@ -69,35 +69,10 @@
         </p>
       <hr>
 
-      <h2>
-         Reviews
-      </h2>
-
-      <div
-        v-if="reviews.length"
-      >
-
-      <div
-        class="review"
-        v-for="review in reviews"
-        :key="review.review_id"
-      >
-
-      <strong>
-        ⭐ {{ review.rating }}
-      </strong>
-
-      <p>
-        {{ review.review_text }}
-      </p>
-
-    </div>
-
-   </div>
-
-    <p v-else>
-      No reviews yet.
-    </p>
+      <ReviewSection
+        :reviews="reviews"
+        @review-added="addReview"
+      />
 
   </div>
 
@@ -169,6 +144,7 @@
 
 
 <script setup>
+import ReviewSection from "@/components/ReviewSection.vue";
 
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -209,6 +185,16 @@ function openMessages(){
       organisation: organisation.value.organisation_id
     }
   });
+}
+
+function addReview(review){
+    const newReview = {
+        review_id: Date.now(),
+        organisation_id: organisation.value.organisation_id,
+        rating: review.rating,
+        review_text: review.review_text
+    };
+    reviews.value.push(newReview);
 }
 
 </script>
