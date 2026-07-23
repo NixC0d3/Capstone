@@ -2,7 +2,7 @@ const API_URL = "http://localhost:5000";
 
 export async function loginUser(credentials){
     const response = await fetch(
-        `${API_URL}/login`,
+        `${API_URL}/api/auth/login`,
         {
             method:"POST",
             headers:{
@@ -27,7 +27,7 @@ export async function registerUser(userData){
             headers:{
                 "Content-Type":"application/json"
             },
-            body: JSON.stringify({userData})
+            body: JSON.stringify(userData)
         }
     );
 

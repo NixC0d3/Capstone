@@ -1,24 +1,60 @@
 <script setup>
-import { RouterLink } from "vue-router"
-import { ref } from "vue"
-import { loginUser } from "@/services/authService"
-import { useRouter } from "vue-router"
+import { RouterLink, useRouter} from "vue-router";
+import { ref } from "vue";
+import { loginUser } from "@/services/authService";
 
-const router = useRouter()
 
-const email = ref("")
-const password = ref("")
+const router = useRouter();
+
+const email = ref("");
+const password = ref("");
+const loading = ref(false);
+const errorMessage = ref("");
 
 async function login(){
+  errorMessage.value = "";
+  loading.value = true;
   try{
     const result = await loginUser({
       email: email.value,
       password: password.value
     });
-    console.log(result);
-    alert("Login successful");
+    // Save logged-in user
+    localStorage.setItem(
+      "user",
+      JSON.stringify(result.user)
+    );
+    // Redirect based on role
+    switch (result.user.role_id) {
+      case 1:
+        router.push("/generaluser/home");
+        break;
+
+      case 2:
+        // Business dashboard
+        //router.push("/business/home");
+        break;
+
+      case 3:
+        // Charity dashboard
+        //router.push("/charity/home");
+        break;
+
+      case 4:
+        // Admin dashboard
+        //router.push("/admin/dashboard");
+        break;
+
+      default:
+        errorMessage.value = "Unknown user role.";
+    }
   }catch(error){
-    alert(error.message);
+    errorMessage.value =
+      error.response?.data?.error ||
+      error.message ||
+      "Login failed.";
+  }finally {
+    loading.value = false;
   }
 }
 </script>
@@ -42,20 +78,30 @@ async function login(){
           v-model="email"
           type="text"
           placeholder="Email"
+          required
         />
 
         <input
           v-model="password"
           type="password"
           placeholder="Password"
+          required
         />
         <button
           type="submit"
           class="login-btn"
+          :disabled="loading"
         >
-          Login
+          {{ loading ? "Logging in..." : "Login" }}
         </button>
       </form>
+
+      <p
+        v-if="errorMessage"
+        class="error"
+      >
+        {{ errorMessage }}
+      </p>
 
       <p class="signup-text">
         Don't have an account?

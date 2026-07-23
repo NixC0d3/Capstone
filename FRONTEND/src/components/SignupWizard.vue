@@ -153,7 +153,7 @@
 <script setup>
 
 import { reactive, ref } from "vue"
-import { api } from "@/services/api"
+import { registerUser } from "@/services/authService"
 
 const step = ref(1)
 const totalSteps = 5
@@ -285,6 +285,16 @@ function toggleSkill(skill) {
 }
 
 function next() {
+  if(!user.first_name ||
+     !user.last_name ||
+     !user.email ||
+     !user.password ||
+     !user.userType){
+
+    alert("Please complete your profile information")
+    return
+  }
+  
   // Businesses and charities skip onboarding
   if (step.value === 1 && user.userType !== "Community Member"
   ){
@@ -315,11 +325,13 @@ async function finish(){
     role_id = 3
   }
 
-  const response = await api.registerUser({
+  const response = await registerUser({
     first_name:user.first_name,
     last_name:user.last_name,
     email:user.email,
     password:user.password,
+
+    location:user.location,
     role_id:role_id,
 
     preferences:preferences,
