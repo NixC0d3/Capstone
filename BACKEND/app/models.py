@@ -238,3 +238,44 @@ class MonthlyBusinessReport(db.Model, SerializerMixin):
     growth_rate = db.Column(db.Float, nullable=True)
     trend_status = db.Column(db.String(50), nullable=True)
     generated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class UserFactor(db.Model):
+    __tablename__ = "user_factors"
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.user_id"),
+        primary_key=True
+    )
+
+    # Stores the SVD vector as a JSON list, for example [0.2, 0.5, -0.1]
+    factors = db.Column(db.JSON, nullable=False)
+
+    trained_at = db.Column(
+        db.DateTime,
+        server_default=db.func.now(),
+        onupdate=db.func.now()
+    )
+
+    user = db.relationship("User", backref="factor")
+
+
+class OrganisationFactor(db.Model):
+    __tablename__ = "organisation_factors"
+
+    organisation_id = db.Column(
+        db.Integer,
+        db.ForeignKey("organisations.organisation_id"),
+        primary_key=True
+    )
+
+    # Stores the SVD vector as a JSON list
+    factors = db.Column(db.JSON, nullable=False)
+
+    trained_at = db.Column(
+        db.DateTime,
+        server_default=db.func.now(),
+        onupdate=db.func.now()
+    )
+
+    organisation = db.relationship("Organisation", backref="factor")
