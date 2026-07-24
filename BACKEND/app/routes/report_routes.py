@@ -1,13 +1,4 @@
-from flask import Blueprint, request, jsonify
-from app.services.trend_score_service import (
-    calculate_average_rating,
-    calculate_bayesian_rating,
-    calculate_engagement_score,
-    calculate_trend_score,
-    calculate_growth_rate,
-    classify_trend_status,
-)
-from app.models import MonthlyBusinessReport
+from flask import Blueprint, jsonify
 import psycopg2
 
 monthly_report_bp = Blueprint("monthly_report", __name__)
@@ -54,40 +45,25 @@ def get_monthly_report(organisation_id):
         (organisation_id,)
     )
 
-@report_bp.route("/organisation/<int:organisation_id>", methods=["GET"])
-def get_organisation_report(organisation_id):
+    rows = cursor.fetchall()
 
-    month = request.args.get("month")
-    year = request.args.get("year")
+    reports = []
 
-    report = MonthlyBusinessReport.query.filter_by(
-        organisation_id=organisation_id,
-        report_month=month,
-        report_year=year
-    ).first()
+    for row in rows:
+        reports.append({
+            "report_month": row[0],
+            "report_year": row[1],
+            "total_views": row[2],
+            "total_saves": row[3],
+            "total_messages": row[4],
+            "total_reviews": row[5],
+            "total_volunteer_signups": row[6],
+            "engagement_score": float(row[7]),
+            "growth_rate": float(row[8]),
+            "trend_status": row[9]
+        })
 
+    cursor.close()
+    connection.close()
 
-    if not report:
-        return jsonify({
-            "error":"Report not found"
-        }),404
-
-
-    return jsonify({
-        "month": month,
-        "year": year,
-        "trend_score": report.trend_score,
-        "growth_rate": report.growth_rate,
-        "trend_status": report.trend_status,
-
-        "bayesian_rating": report.bayesian_rating,
-        "total_reviews": report.total_reviews,
-
-        "profile_views": report.total_views,
-        "saves": report.total_saves,
-        "messages": report.total_messages,
-
-        #when its added to the table then change this
-        #"volunteer_signups": report.volunteer_signups
-        "volunteer_signups": 0
-    })
+    return jsonify(reports)
