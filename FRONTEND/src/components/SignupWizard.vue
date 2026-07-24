@@ -154,6 +154,8 @@
 
 import { reactive, ref } from "vue"
 import { registerUser } from "@/services/authService"
+import { useRouter } from "vue-router"
+const router = useRouter()
 
 const step = ref(1)
 const totalSteps = 5
@@ -341,7 +343,7 @@ async function finish(){
 
   alert("Account created successfully")
     // Redirect based on role
-    switch (result.user.role_id) {
+    switch (role_id) {
       case 1:
         router.push("/generaluser/home");
         break;
