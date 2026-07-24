@@ -340,6 +340,30 @@ async function finish(){
   console.log(response)
 
   alert("Account created successfully")
+    // Redirect based on role
+    switch (result.user.role_id) {
+      case 1:
+        router.push("/generaluser/home");
+        break;
+
+      case 2:
+        // Business dashboard
+        //router.push("/business/home");
+        break;
+
+      case 3:
+        // Charity dashboard
+        //router.push("/charity/home");
+        break;
+
+      case 4:
+        // Admin dashboard
+        //router.push("/admin/dashboard");
+        break;
+
+      default:
+        errorMessage.value = "Unknown user role.";
+    }
   }catch(error){
 
     console.error(error)
