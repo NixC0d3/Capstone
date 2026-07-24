@@ -8,38 +8,50 @@ from app.services.trend_score_service import (
     classify_trend_status,
 )
 from app.models import MonthlyBusinessReport
+import psycopg2
 
-report_bp = Blueprint("report_bp", __name__)
+monthly_report_bp = Blueprint("monthly_report", __name__)
 
-@report_bp.route("/trend-score", methods=["POST"])
-def calculate_report_demo():
-    data = request.get_json() or {}
+DB_NAME = "capstone"
+DB_USER = "postgres"
+DB_PASSWORD = "password"
+DB_HOST = "localhost"
+DB_PORT = "5432"
 
-    total_reviews = data.get("total_reviews", 0)
-    total_rating_score = data.get("total_rating_score", 0)
-    global_average_rating = data.get("global_average_rating", 0)
-    previous_trend_score = data.get("previous_trend_score", 0)
 
-    average_rating = calculate_average_rating(total_rating_score, total_reviews)
-    bayesian_rating = calculate_bayesian_rating(
-        average_rating,
-        total_reviews,
-        global_average_rating,
-        data.get("minimum_expected_reviews", 5)
+def get_connection():
+    return psycopg2.connect(
+        dbname=DB_NAME,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        host=DB_HOST,
+        port=DB_PORT
     )
 
-    engagement_score = calculate_engagement_score(data.get("engagement_counts", {}))
-    trend_score = calculate_trend_score(engagement_score, bayesian_rating)
-    growth_rate = calculate_growth_rate(trend_score, previous_trend_score)
-    status = classify_trend_status(growth_rate)
 
-    return jsonify(
-        average_rating=average_rating,
-        bayesian_rating=bayesian_rating,
-        engagement_score=engagement_score,
-        trend_score=trend_score,
-        growth_rate=growth_rate,
-        trend_status=status
+@monthly_report_bp.route("/monthly-report/<int:organisation_id>", methods=["GET"])
+def get_monthly_report(organisation_id):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            report_month,
+            report_year,
+            total_views,
+            total_saves,
+            total_messages,
+            total_reviews,
+            total_volunteer_signups,
+            engagement_score,
+            growth_rate,
+            trend_status
+        FROM monthly_business_reports
+        WHERE organisation_id = %s
+        ORDER BY report_year, report_month;
+        """,
+        (organisation_id,)
     )
 
 @report_bp.route("/organisation/<int:organisation_id>", methods=["GET"])

@@ -1,195 +1,166 @@
-from flask import Blueprint, jsonify, request
-from app.models import RatingReview
-from app.services.recommendation_service import recommend_with_svd
+"""
+Recommendation API Routes
+=========================
 
-#-------------------------------------------------------------------------------------------------------------------------------------------
-#########################ADDED MORE LIBRARIES AND IMPORTS#############################
-#-------------------------------------------------------------------------------------------------------------------------------------------
+Register this blueprint in BACKEND/app/__init__.py:
+
+    from app.routes.recommendation_routes import recommendation_bp
+    app.register_blueprint(recommendation_bp, url_prefix="/api/recommendations")
+
+Useful URLs after Flask starts:
+
+    POST http://localhost:5001/api/recommendations/train
+    POST http://localhost:5001/api/recommendations/train/database
+    POST http://localhost:5001/api/recommendations/train/spreadsheet
+
+If spreadsheet organisation IDs are 1000, 1001, 1002...
+but the database uses 1, 2, 3..., use organisation_id_offset=-999.
+    GET  http://localhost:5001/api/recommendations/user/30001
+    GET  http://localhost:5001/api/recommendations/spreadsheet-preview
+"""
+
+from flask import Blueprint, jsonify, request
 
 from app.services.recommendation_service import (
     get_recommendations,
     get_recommendations_with_explanations,
+    spreadsheet_preview,
+    train_svd_model,
+    train_svd_model_from_database,
     train_svd_model_from_spreadsheet,
-    load_ratings_from_spreadsheet,
-    recommend_with_svd,          
-    fallback_recommendations    
 )
-from app.models import Organisation, UserFactor, RatingReview
-from app.extensions import db
-import pandas as pd
 
-#-------------------------------------------------------------------------------------------------------------------------------------------
-######################### RECOMMENDATION MODEL ENDPOINT #############################
-#-------------------------------------------------------------------------------------------------------------------------------------------
+recommendation_bp = Blueprint("recommendation_bp", __name__)
 
-@recommendation_bp.route('/train', methods=['POST'])
+
+@recommendation_bp.route("/train", methods=["POST"])
 def train_model():
+    """
+    Train the recommender and store UserFactor and OrganisationFactor vectors.
 
-    #Trains the model using results from the training data spreadsheet
+    Default source is database.
 
-    try:
-        # Call the training function from the recommendation service
-        # This function loads the spreadsheet, builds the matrix, applies SVD, and stores factors
-        result = train_svd_model_from_spreadsheet()
-        
-        # Return the result as JSON with 200 OK status
-        return jsonify(result), 200
-    except Exception as e:
+    JSON body examples:
 
-        #error handing if training model fails
-        
-        return jsonify({"message": f"Training failed: {str(e)}"}), 500
+        {"source": "database"}
 
-#-------------------------------------------------------------------------------------------------------------------------------------------
-######################### RECOMMENDATION MODEL ENDPOINT #############################
-#-------------------------------------------------------------------------------------------------------------------------------------------
+        {"source": "spreadsheet", "user_id_offset": 30000}
+
+    Query string also works:
+
+        /api/recommendations/train?source=spreadsheet&user_id_offset=30000
+    """
+    data = request.get_json(silent=True) or {}
+
+    source = data.get("source") or request.args.get("source", "database")
+    max_components = int(
+        data.get("max_components") or request.args.get("max_components", 10)
+    )
+    user_id_offset = int(
+        data.get("user_id_offset") or request.args.get("user_id_offset", 0)
+    )
+    organisation_id_offset = int(
+        data.get("organisation_id_offset") or request.args.get("organisation_id_offset", 0)
+    )
+
+    result = train_svd_model(
+        source=source,
+        max_components=max_components,
+        user_id_offset=user_id_offset,
+        organisation_id_offset=organisation_id_offset,
+    )
+
+    status_code = 200 if result.get("trained") else 400
+
+    return jsonify(result), status_code
 
 
-#-------------------------------------------------------------------------------------------------------------------------------------------
-######################### USER RECOMMENDATIONS ENDPOINT #############################
-#-------------------------------------------------------------------------------------------------------------------------------------------
+@recommendation_bp.route("/train/database", methods=["POST"])
+def train_model_from_database():
+    """
+    Train using real app data from ratings, saved organisations, and engagement logs.
+    """
+    data = request.get_json(silent=True) or {}
 
-@recommendation_bp.route('/user/<int:user_id>', methods=['GET'])
+    max_components = int(
+        data.get("max_components") or request.args.get("max_components", 10)
+    )
+
+    result = train_svd_model_from_database(max_components=max_components)
+    status_code = 200 if result.get("trained") else 400
+
+    return jsonify(result), status_code
+
+
+@recommendation_bp.route("/train/spreadsheet", methods=["POST"])
+def train_model_from_spreadsheet():
+    """
+    Train using the Excel spreadsheet.
+
+    Use user_id_offset=30000 if the spreadsheet user IDs are 1, 2, 3...
+    but your seeded database user IDs are 30001, 30002, 30003...
+    """
+    data = request.get_json(silent=True) or {}
+
+    max_components = int(
+        data.get("max_components") or request.args.get("max_components", 10)
+    )
+    user_id_offset = int(
+        data.get("user_id_offset") or request.args.get("user_id_offset", 0)
+    )
+    organisation_id_offset = int(
+        data.get("organisation_id_offset") or request.args.get("organisation_id_offset", 0)
+    )
+
+    result = train_svd_model_from_spreadsheet(
+        max_components=max_components,
+        user_id_offset=user_id_offset,
+        organisation_id_offset=organisation_id_offset,
+    )
+
+    status_code = 200 if result.get("trained") else 400
+
+    return jsonify(result), status_code
+
+
+@recommendation_bp.route("/user/<int:user_id>", methods=["GET"])
 def get_user_recommendations(user_id):
+    """
+    Return recommendations for a selected user.
 
-    #Gets a user's recommendations
+    Example:
+        /api/recommendations/user/30001?top_n=5
+    """
+    top_n = request.args.get("top_n", 10, type=int)
+    include_explanations = request.args.get(
+        "include_explanations",
+        "true",
+    ).lower() == "true"
 
-    # top_n: Number of recommendations to return (default: 10)
-    top_n = request.args.get('top_n', 10, type=int)
-    
-    # include_explanations is if we plan to include explanations with the recommendations, like explaining to the general user to some level 
-    # why its being recommended to them
+    if include_explanations:
+        result = get_recommendations_with_explanations(user_id, top_n)
+    else:
+        result = get_recommendations(user_id, top_n)
 
-    include_explanations = request.args.get('include_explanations', 'false').lower() == 'true'
-    
-    try:
-        # Check if explanations are requested
-        if include_explanations:
-            # Calls the function that returns recommendations with explanations
-            result = get_recommendations_with_explanations(user_id, top_n)
-        else:
-            # Calls the basic recommendation function which returns the small business IDs and predicted scores
-            result = get_recommendations(user_id, top_n)
-        
-        # Return the result as JSON with 200 OK status
-        return jsonify(result), 200
-    except Exception as e:
-        # error handling
-        return jsonify({
-            "message": f"Error generating recommendations: {str(e)}",
-            "recommendations": []
-        }), 500
-
-#-------------------------------------------------------------------------------------------------------------------------------------------
-######################### USER RECOMMENDATIONS ENDPOINT #############################
-#-------------------------------------------------------------------------------------------------------------------------------------------
-
-@recommendation_bp.route('/status', methods=['GET'])
-def get_model_status():
-
-    #checks to see if the model is ready before making recommendation requests
-    #could also be used to show the status on the admin dashboard
-
-    # UserFactor records are created when training the model
-    user_factor_count = UserFactor.query.count()
-    
-    # Counts how many small business factor records exist (also created during training)
-
-    item_factor_count = UserFactor.query.count()  # Should match small business factor count
-    
-    # Determine if the model has been trained (at least one user factor needs to exists)
-    model_trained = user_factor_count > 0
-    
-    # Return the status as JSON
-    return jsonify({
-        "model_trained": model_trained,
-        "users_with_factors": user_factor_count,
-        "items_with_factors": item_factor_count,
-
-        "message": "Model is ready." if model_trained else "Model not trained yet. Please run /api/recommendations/train first."
-    }), 200
-
-#-------------------------------------------------------------------------------------------------------------------------------------------
-######################### USER RECOMMENDATIONS ENDPOINT #############################
-#-------------------------------------------------------------------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------------------------------------------------------------------
-######################### GET RECOMMENDATIONS (RANKED) ENDPOINT #############################
-#-------------------------------------------------------------------------------------------------------------------------------------------
-
-@recommendation_bp.route('/user/<int:user_id>/ranked', methods=['GET'])
-def get_user_recommendations_ranked(user_id):
-
-    #Gets recommendations based on that user's ranking and match percentages
-
-    top_n = request.args.get('top_n', 10, type=int)
-    
-    try:
-        # Imports the ranking function from the service
-        from app.services.recommendation_service import get_recommendations_ranked
-        
-        # Gets the ranked recommendations
-        result = get_recommendations_ranked(user_id, top_n)
-        
-        # Return the result as JSON
-        return jsonify(result), 200
-    except Exception as e:
-        # Handle any errors that occur
-        return jsonify({
-            "message": f"Error generating ranked recommendations: {str(e)}",
-            "recommendations": []
-        }), 500
-
-#-------------------------------------------------------------------------------------------------------------------------------------------
-######################### GET RECOMMENDATIONS (RANKED) ENDPOINT #############################
-#-------------------------------------------------------------------------------------------------------------------------------------------
+    return jsonify(result), 200
 
 
-#-------------------------------------------------------------------------------------------------------------------------------------------
-######################### GET RECOMMENDATIONS (POPULAR) ENDPOINT #############################
-#-------------------------------------------------------------------------------------------------------------------------------------------
+@recommendation_bp.route("/spreadsheet-preview", methods=["GET"])
+def preview_spreadsheet():
+    """
+    Check whether Flask can find and read the spreadsheet.
 
-@recommendation_bp.route('/user/<int:user_id>/trending', methods=['GET'])
-def get_trending_recommendations(user_id):
+    Example:
+        /api/recommendations/spreadsheet-preview?user_id_offset=30000
+    """
+    user_id_offset = request.args.get("user_id_offset", 0, type=int)
+    organisation_id_offset = request.args.get("organisation_id_offset", 0, type=int)
+    sample_size = request.args.get("sample_size", 10, type=int)
 
-    ## Get recommendations based on popularity
-    ## Mainly for first time users
+    result = spreadsheet_preview(
+        user_id_offset=user_id_offset,
+        organisation_id_offset=organisation_id_offset,
+        sample_size=sample_size,
+    )
 
-    top_n = request.args.get('top_n', 10, type=int)
-    
-    try:
-        from app.services.recommendation_service import get_trending_recommendations
-        
-        result = get_trending_recommendations(user_id, top_n)
-        
-        return jsonify(result), 200
-    except Exception as e:
-        # Handle any errors
-        return jsonify({
-            "message": f"Error generating trending recommendations: {str(e)}",
-            "recommendations": []
-        }), 500
-
-#-------------------------------------------------------------------------------------------------------------------------------------------
-######################### GET RECOMMENDATIONS (POPULAR) ENDPOINT #############################
-#-------------------------------------------------------------------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------------------------------------------------------------------
-######################### WAS HERE BEFORE #############################
-#-------------------------------------------------------------------------------------------------------------------------------------------
-
-@recommendation_bp.route("/<int:user_id>", methods=["GET"])
-def get_recommendations(user_id):
-    top_n = int(request.args.get("top_n", 5))
-
-    ratings = [
-        {
-            "user_id": review.user_id,
-            "organisation_id": review.organisation_id,
-            "rating": review.rating
-        }
-        for review in RatingReview.query.filter_by(is_hidden=False).all()
-    ]
-
-    result = recommend_with_svd(ratings, selected_user_id=user_id, top_n=top_n)
-    return jsonify(result)
+    return jsonify(result), 200
