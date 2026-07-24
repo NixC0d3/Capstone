@@ -35,10 +35,9 @@ export const api = {
     return request("/organisations/locations");
   },
 
-  getTrendReport(id, month, year){
-    return request(`/reports/organisation/${id}?month=${month}&year=${year}`);
-  },
-
+  getMonthlyReport(id){
+    return request(`/monthly-report/${id}`);
+},
   registerUser(payload){
     return request("/auth/register", {
       method:"POST",

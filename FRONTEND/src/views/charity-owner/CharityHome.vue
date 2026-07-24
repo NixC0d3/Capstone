@@ -1,22 +1,23 @@
 <template>
 
-    <div class="dashboard">
+  <div class="dashboard" v-if="currentReport">
+    <TrendScore
+      :report="currentReport"
+    />
 
-        <TrendScore
-            :report="report"
-        />
+    <PerformanceSummary
+      :report="currentReport"
+      organisationType="charity"
+    />
 
-        <PerformanceSummary
-            :report="report"
-            organisationType="'charity'"
-        />
-
-        <EngagementChart
-            :report="report"
-            organisationType="charity"
-        />
-
-    </div>
+    <EngagementChart
+      :reports="reports"
+      organisationType="charity"
+     />
+  </div>
+  <p v-else>
+    Loading dashboard...
+  </p>
 
 </template>
 
@@ -29,18 +30,19 @@ import TrendScore from "@/components/AnalyticsDashboard/TrendScore.vue"
 import PerformanceSummary from "@/components/AnalyticsDashboard/PerformanceSummary.vue"
 import EngagementChart from "@/components/AnalyticsDashboard/EngagementChart.vue"
 
-const report = ref(null)
+const reports = ref([])
+const currentReport = ref(null)
+
+const organisationId = 15
 
 // TODO: Replace hardcoded organisation ID with the logged-in user's
 // organisation after JWT authentication is implemented.
 onMounted(async () => {
   try {
-    report.value = await api.getTrendReport(
-      6, // Temporary organisation ID
-      7,
-      2026
-    )
-  } catch (error) {
+    reports.value = await api.getMonthlyReport(organisationId)
+    currentReport.value = reports.value[reports.value.length - 1]
+    
+  }catch (error) {
     console.error(error)
   }
 })
