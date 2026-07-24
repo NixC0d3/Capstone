@@ -74,3 +74,26 @@ def get_locations():
         }
         for location in locations
     ])
+
+"""
+@organisation_bp.route("/my-organisation", methods=["GET"])
+def get_my_organisation():
+
+    user_id = get_jwt_identity()
+
+    organisation = Organisation.query.filter_by(
+        owner_user_id=user_id
+    ).first()
+
+    if not organisation:
+        return jsonify({
+            "error": "No organisation found"
+        }),404
+
+
+    return jsonify({
+        "organisation_id": organisation.organisation_id,
+        "organisation_name": organisation.organisation_name,
+        "organisation_type": organisation.organisation_type
+    })
+"""

@@ -49,14 +49,12 @@
 
       <h3>What describes you?</h3>
       <button
-      v-for="type in userTypes"
-      :key="type"
-      @click="user.userType = type"
-      :class="{selected:user.userType === type}"
-      >
-
-      {{type}}
-
+        v-for="type in userTypes"
+        :key="type"
+        @click="user.userType = type"
+        :class="{selected:user.userType === type}"
+        >
+        {{type}}
       </button>
     </div>
 
@@ -66,15 +64,12 @@
       <h2>Businesses you want to discover</h2>
 
       <div class="grid">
-        <button
+        <button type="button"
           v-for="item in businessInterests"
           :key="item.id"
           @click="toggleBusiness(item)"
-          :class="{
-          selected:user.businessInterests.some(i => i.id === item.id)
-          }"
-          >
-
+          :class="{selected:user.businessInterests.some(i => i.id === item.id)}"
+        >
           {{item.name}}
         </button>
       </div>
@@ -86,17 +81,13 @@
       <h2>Causes you care about</h2>
       <div class="grid">
 
-        <button
-        v-for="item in charityInterests"
-        :key="item"
-        @click="toggleCharity(item)"
-        :class="{
-        selected:user.charityInterests.some(i => i.id === item.id)
-        }"
+        <button type="button"
+          v-for="item in charityInterests"
+          :key="item"
+          @click="toggleCharity(item)"
+          :class="{selected:user.charityInterests.some(i => i.id === item.id)}"
         >
-
-        {{item.name}}
-
+          {{item.name}}
         </button>
       </div>
     </div>
@@ -109,12 +100,12 @@
       </p>
 
       <div class="grid">
-          <button
+        <button type="button"
           v-for="skill in skills"
           :key="skill"
           @click="toggleSkill(skill)"
           :class="{ selected: user.skills.includes(skill) }"
-          >
+        >
           {{ skill }}
         </button>
 
@@ -128,21 +119,23 @@
       </div>
       
       <div class="buttons">
-        <button v-if="step > 1"
+        <button type="button" 
+          v-if="step > 1"
           @click="step--"
-          >
+        >
           Back
         </button>
 
-        <button v-if="step < totalSteps"
+        <button type="button" 
+          v-if="step < totalSteps"
           @click="next"
-          >
+        >
           Continue
         </button>
 
         <button v-if="step === totalSteps"
           @click="finish"
-          >
+        >
           Create Account
         </button>
       </div>
@@ -287,6 +280,7 @@ function toggleSkill(skill) {
 }
 
 function next() {
+  console.log(user)
   if(!user.first_name ||
      !user.last_name ||
      !user.email ||
@@ -350,17 +344,17 @@ async function finish(){
 
       case 2:
         // Business dashboard
-        //router.push("/business/home");
+        router.push("/business-user/home");
         break;
 
       case 3:
         // Charity dashboard
-        //router.push("/charity/home");
+        router.push("/charity-user/home");
         break;
 
       case 4:
         // Admin dashboard
-        //router.push("/admin/dashboard");
+        //router.push("/admin-user/home");
         break;
 
       default:

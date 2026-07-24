@@ -8,6 +8,10 @@ import GeneralUserHome from "@/views/general-user/GeneralUserHome.vue";
 import GeneralUserProfile from "@/views/general-user/GeneralUserProfile.vue";
 import GeneralUserCharity from "@/views/general-user/GeneralUserCharity.vue";
 
+import BusinessHome from "@/views/business-owner/BusinessHome.vue";
+
+import CharityHome from "@/views/charity-owner/CharityHome.vue";
+
 import OrgView from "@/views/general-user/OrgView.vue";
 import Inbox from "@/views/Inbox.vue";
 const router = createRouter({
@@ -48,6 +52,14 @@ const router = createRouter({
     {
       path: "/generaluser/inbox",
       component: Inbox
+    },
+    {
+      path: "/business-user/home",
+      component: BusinessHome
+    },
+    {
+      path: "/charity-user/home",
+      component: CharityHome
     },
     {
       path: "/about",

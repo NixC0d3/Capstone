@@ -7,6 +7,7 @@ from app.services.trend_score_service import (
     calculate_growth_rate,
     classify_trend_status,
 )
+from app.models import MonthlyBusinessReport
 
 report_bp = Blueprint("report_bp", __name__)
 
@@ -40,3 +41,41 @@ def calculate_report_demo():
         growth_rate=growth_rate,
         trend_status=status
     )
+
+@report_bp.route("/organisation/<int:organisation_id>", methods=["GET"])
+def get_organisation_report(organisation_id):
+
+    month = request.args.get("month")
+    year = request.args.get("year")
+
+    report = MonthlyBusinessReport.query.filter_by(
+        organisation_id=organisation_id,
+        report_month=month,
+        report_year=year
+    ).first()
+
+
+    if not report:
+        return jsonify({
+            "error":"Report not found"
+        }),404
+
+
+    return jsonify({
+        "month": month,
+        "year": year,
+        "trend_score": report.trend_score,
+        "growth_rate": report.growth_rate,
+        "trend_status": report.trend_status,
+
+        "bayesian_rating": report.bayesian_rating,
+        "total_reviews": report.total_reviews,
+
+        "profile_views": report.total_views,
+        "saves": report.total_saves,
+        "messages": report.total_messages,
+
+        #when its added to the table then change this
+        #"volunteer_signups": report.volunteer_signups
+        "volunteer_signups": 0
+    })
