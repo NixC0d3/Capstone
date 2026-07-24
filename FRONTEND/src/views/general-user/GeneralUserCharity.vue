@@ -10,10 +10,21 @@
     </p>
 
     <SearchBar
+        v-model:searchTerm="searchTerm"
+        v-model:category="selectedCategory"
+        v-model:location="selectedLocation"
+        :categories="categories"
+        :locations="locations"
         @search="searchCharities"
     />
 
     <div v-if="hasSearched">
+        <button
+            class="back-button"
+            @click="goBack"
+        >
+            ← Clear Search
+        </button>
 
         <h2>
             Search Results
@@ -63,11 +74,26 @@ import CharityCard from "@/components/CharityCard.vue";
 import { api } from "@/services/api";
 
 const charities = ref([]);
+
+const categories = ref([]);
+const locations = ref([]);
+
+const searchTerm = ref("");
+const selectedCategory = ref("");
+const selectedLocation = ref("");
+
 const searchResults = ref([]);
 const hasSearched = ref(false);
 
+function goBack() {
+    hasSearched.value = false;
 
-function searchCharities(filters){
+    searchTerm.value = "";
+    selectedCategory.value = "";
+    selectedLocation.value = "";
+}
+
+function searchCharities(){
     hasSearched.value = true;
 
     searchResults.value =
@@ -79,12 +105,14 @@ function searchCharities(filters){
         .includes(filters.searchTerm.toLowerCase());
 
         const matchesCategory =
-        !filters.category ||
-        charity.category_name === filters.category;
+            !selectedCategory.value ||
+            charity.category_name?.toLowerCase() ===
+            selectedCategory.value.toLowerCase();
 
         const matchesLocation =
-        !filters.location ||
-        charity.parish === filters.location;
+            !selectedLocation.value ||
+            charity.parish?.toLowerCase() ===
+            selectedLocation.value.toLowerCase();
 
         return matchesName 
         && matchesCategory 
@@ -92,14 +120,16 @@ function searchCharities(filters){
     });
 }
 
-onMounted(async()=>{
-    try{
+onMounted(async () => {
+    try {
         const organisations = await api.getOrganisations();
         charities.value = organisations.filter(
             organisation =>
             organisation.organisation_type === "charity"
         );
-    }catch(error){
+        categories.value = await api.getCategories();
+        locations.value = await api.getLocations();
+    } catch(error){
         console.error(error);
     }
 });

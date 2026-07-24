@@ -20,11 +20,19 @@ async function request(path, options = {}) {
 
 export const api = {
   getOrganisations() {
-    return request("/api/organisations");
+    return request("/organisations");
   },
 
   getOrganisation(id) {
     return request(`/organisations/${id}`);
+  },
+
+  getCategories() {
+    return request("/organisations/categories");
+  },
+  
+  getLocations(){
+    return request("/organisations/locations");
   },
 
   registerUser(payload){

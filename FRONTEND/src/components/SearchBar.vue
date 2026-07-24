@@ -12,13 +12,18 @@
       :value="category"
       @change="$emit('update:category', $event.target.value)"
     >
-      <option value="">All Categories</option>
-      <option>Food</option>
-      <option>Retail</option>
-      <option>Services</option>
-      <option>Environment</option>
-      <option>Marketing</option>
-      <option>Education</option>
+
+      <option value="">
+        All Categories
+      </option>
+
+      <option
+        v-for="category in categories"
+        :key="category.category_id"
+        :value="category.category_name"
+      >
+        {{category.category_name}}
+      </option>
     </select>
 
 
@@ -27,10 +32,13 @@
       @change="$emit('update:location', $event.target.value)"
     >
       <option value="">All Locations</option>
-      <option>Kingston</option>
-      <option>St. Ann</option>
-      <option>Montego Bay</option>
-      <option>St. Catherine</option>
+      <option
+      v-for="location in locations"
+      :key="location.parish"
+      :value="location.parish"
+      >
+      {{location.parish}}
+      </option>
     </select>
 
 
@@ -47,7 +55,15 @@
 const props = defineProps({
   searchTerm: String,
   category: String,
-  location: String
+  location: String,
+  categories:{
+    type:Array,
+    default:()=>[]
+  },
+  locations:{
+    type:Array,
+    default:()=>[]
+  }
 });
 
 

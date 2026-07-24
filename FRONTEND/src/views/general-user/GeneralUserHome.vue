@@ -1,16 +1,17 @@
 <template>
   <div class="dashboard">
 
-    <h1>Explore your Community</h1>
-
     <p class="subtitle">
       Find small businesses worth supporting
     </p>
+    <h1>Explore your Community</h1>
 
     <SearchBar
         v-model:searchTerm="searchTerm"
         v-model:category="selectedCategory"
         v-model:location="selectedLocation"
+        :categories="categories"
+        :locations="locations"
         @search="searchOrganizations"
     />
 
@@ -61,7 +62,8 @@ import { api } from "@/services/api";
 
 
 const organisations = ref([]);
-
+const categories = ref([]);
+const locations = ref([]);
 
 const searchTerm = ref("");
 const selectedCategory = ref("");
@@ -70,19 +72,17 @@ const selectedLocation = ref("");
 const hasSearched = ref(false);
 
 
-
 /*
     GET ORGANISATIONS FROM DATABASE
 */
 onMounted(async () => {
   try {
 
-    const response = await api.getOrganisations();
+    const organisationResponse = await api.getOrganisations({type: "busines"});
+    organisations.value = organisationResponse;
 
-    console.log("FULL RESPONSE:", response);
-    console.log("KEYS:", Object.keys(response));
-
-    organisations.value = response;
+    categories.value = await api.getCategories();
+    locations.value = await api.getLocations();
 
   } catch(error){
     console.error(error);
@@ -101,11 +101,11 @@ const filteredOrganisations = computed(() => {
       ).toLowerCase();
     const category =
       (
-        org.organisation_type || ""
+        org.category_name || ""
       ).toLowerCase();
     const location =
       (
-        org.location || ""
+        org.parish || ""
       ).toLowerCase();
 
       const matchesSearch = name.includes(
