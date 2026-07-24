@@ -33,4 +33,6 @@ venv
 
 # Environment Variables
 .env
+FRONTEND/.env
+BACKEND/.env
 .flaskenv
