@@ -24,25 +24,27 @@ async function login(){
       "user",
       JSON.stringify(result.user)
     );
+    
     // Redirect based on role
-    switch (result.user.role_id) {
+    const roleId = result.user.role_id;
+    switch (roleId) {
       case 1:
         router.push("/generaluser/home");
         break;
 
       case 2:
         // Business dashboard
-        //router.push("/business/home");
+        router.push("/business-user/home");
         break;
 
       case 3:
         // Charity dashboard
-        //router.push("/charity/home");
+        router.push("/charity-user/home");
         break;
 
       case 4:
         // Admin dashboard
-        //router.push("/admin/dashboard");
+        //router.push("/admin-user/home");
         break;
 
       default:

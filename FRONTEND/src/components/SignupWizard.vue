@@ -35,14 +35,14 @@
       />
 
 
-      <select v-model="user.location">
+      <select v-model="user.location_id">
         <option disabled value="">Location</option>
         <option 
-          v-for="parish in parishes"
-          :key="parish"
-          :value="parish"
+          v-for="location in locations"
+          :key="location.location_id"
+          :value="location.location_id"
         >
-          {{ parish }}
+          {{ location.parish }}
         </option>
       </select>
 
@@ -51,11 +51,21 @@
       <button
         v-for="type in userTypes"
         :key="type"
-        @click="user.userType = type"
+        @click="selectUserType(type)"
         :class="{selected:user.userType === type}"
         >
         {{type}}
       </button>
+
+      <p class="login-text">
+        Already have an account?
+        <RouterLink
+          to="/login"
+          class="login-link"
+        >
+          Login
+        </RouterLink>
+      </p>
     </div>
 
 
@@ -83,7 +93,7 @@
 
         <button type="button"
           v-for="item in charityInterests"
-          :key="item"
+          :key="item.id"
           @click="toggleCharity(item)"
           :class="{selected:user.charityInterests.some(i => i.id === item.id)}"
         >
@@ -114,10 +124,76 @@
 
     <!-- STEP 5 REVIEW -->
     <div v-if="step === 5">
-      <h2>Your Profile</h2>
-      <pre>{{user}}</pre>
+      <h2>Review Your Profile</h2>
+      <div class="review-card">
+        <p>
+          <strong>Name:</strong>
+          {{user.first_name}} {{user.last_name}}
+        </p>
+
+        <p>
+          <strong>Email:</strong>
+          {{user.email}}
+        </p>
+
+        <p>
+          <strong>Location:</strong>
+          {{
+            locations.find(
+              location => location.location_id === user.location_id
+            )?.parish
+          }}
+        </p>
+
+        <p>
+          <strong>Account Type:</strong>
+          {{user.userType}}
+        </p>
+
+        <div v-if="user.userType === 'Community Member'">
+
+          <p>
+            <strong>Business Interests:</strong>
+          </p>
+
+          <ul>
+            <li 
+              v-for="item in user.businessInterests"
+              :key="item.id"
+            >
+              {{item.name}}
+            </li>
+          </ul>
+
+          <p>
+            <strong>Charity Interests:</strong>
+          </p>
+
+          <ul>
+            <li
+              v-for="item in user.charityInterests"
+              :key="item.id"
+            >
+              {{item.name}}
+            </li>
+          </ul>
+
+
+          <p>
+            <strong>Skills:</strong>
+          </p>
+
+          <ul>
+            <li
+              v-for="skill in user.skills"
+              :key="skill"
+            >
+              {{skill}}
+            </li>
+          </ul>
+        </div>
       </div>
-      
+    </div>  
       <div class="buttons">
         <button type="button" 
           v-if="step > 1"
@@ -145,13 +221,16 @@
 
 <script setup>
 
-import { reactive, ref } from "vue"
+import { reactive, ref, onMounted } from "vue"
 import { registerUser } from "@/services/authService"
-import { useRouter } from "vue-router"
+import { useRouter, RouterLink } from "vue-router"
+import { api } from "@/services/api"
+
 const router = useRouter()
 
 const step = ref(1)
-const totalSteps = 5
+const totalSteps = ref(5)
+const errorMessage = ref("")
 
 const user = reactive({
   first_name:"",
@@ -159,7 +238,7 @@ const user = reactive({
   email:"",
   password:"",
 
-  location:"",
+  location_id:null,
 
   userType:"",
 
@@ -205,6 +284,7 @@ const charityInterests = [
   {id:23, name:"Homeless Support"},
   {id:24, name:"Faith-Based Initiatives"}
 ]
+const locations = ref([])
 
 const skills = [
   "Teaching",
@@ -224,23 +304,27 @@ const skills = [
   "Other"
 ]
 
-const parishes = [
-  "Kingston",
-  "St. Andrew",
-  "St. Thomas",
-  "Portland",
-  "St. Mary",
-  "St. Ann",
-  "Trelawny",
-  "St. James",
-  "Hanover",
-  "Westmoreland",
-  "St. Elizabeth",
-  "Manchester",
-  "Clarendon",
-  "St. Catherine"
-]
+onMounted(async()=>{
+  locations.value = await api.getLocations()
+})
 
+function selectUserType(type){
+  user.userType = type
+  
+  // Clear general user data if switching to organisation
+  if(type !== "Community Member"){
+    user.businessInterests = []
+    user.charityInterests = []
+    user.skills = []
+  }
+  if(type === "Community Member"){
+    totalSteps.value = 5
+  }
+  else{
+    totalSteps.value = 1
+    step.value = 1
+  }
+}
 
 function toggleBusiness(item){
   const exists = user.businessInterests.some(
@@ -292,50 +376,52 @@ function next() {
   }
   
   // Businesses and charities skip onboarding
-  if (step.value === 1 && user.userType !== "Community Member"
-  ){
+  if(user.userType !== "Community Member"){
     finish()
     return
-  }if (step.value < totalSteps) {
+  }if (step.value < totalSteps.value) {
     step.value++
   }
 }
 
 async function finish(){
   try{
-    const preferences = [
-      ...user.businessInterests.map(
-        item => item.id
-      ),
-      ...user.charityInterests.map(
-        item => item.id
-      )
-    ]
-  
-  let role_id = 1
+    let role_id = null
 
-  if(user.userType === "Business Owner"){
-    role_id = 2
-  }
-  if(user.userType === "Charity Representative"){
-    role_id = 3
-  }
+    if(user.userType === "Community Member"){
+      role_id = 1
+    }
+    if(user.userType === "Business Owner"){
+      role_id = 2
+    }
+    if(user.userType === "Charity Representative"){
+      role_id = 3
+    }
+    if(!role_id){
+      alert("Please select an account type")
+      return
+    }
 
-  const response = await registerUser({
-    first_name:user.first_name,
-    last_name:user.last_name,
-    email:user.email,
-    password:user.password,
-
-    location:user.location,
-    role_id:role_id,
-
-    preferences:preferences,
-    skills:user.skills
-  })
-  console.log(response)
-
-  alert("Account created successfully")
+    const payload = {
+      first_name:user.first_name,
+      last_name:user.last_name,
+      email:user.email,
+      password:user.password,
+      role_id:role_id,
+      location_id:user.location_id,
+      businessInterests: user.userType === "Community Member"
+        ? user.businessInterests
+        : [],
+      charityInterests: user.userType === "Community Member"
+        ? user.charityInterests
+        : [],
+      skills: user.userType === "Community Member"
+        ? user.skills
+        : []
+    }
+    
+    const response = await registerUser(payload)
+    
     // Redirect based on role
     switch (role_id) {
       case 1:
@@ -350,11 +436,6 @@ async function finish(){
       case 3:
         // Charity dashboard
         router.push("/charity-user/home");
-        break;
-
-      case 4:
-        // Admin dashboard
-        //router.push("/admin-user/home");
         break;
 
       default:
@@ -482,16 +563,24 @@ button.selected{
 }
 
 /* Review box */
-pre{
+.review-card{
   background:#F6F2ED;
   padding:20px;
-  border-radius:10px;
-  color:#2C2C2C;  
-  overflow:auto;
-  font-size:14px;
+  border-radius:12px;
+  color:#2C2C2C;
 }
 
+.review-card p{
+  margin:12px 0;
+}
 
+.review-card ul{
+  padding-left:20px;
+  margin-bottom:20px;
+}
+.review-card li{
+  margin-bottom:6px;
+}
 
 /* Mobile */
 @media(max-width:600px){
@@ -502,6 +591,21 @@ pre{
   .grid{
     grid-template-columns:1fr;
   }
+}
+.login-text{
+    margin-top:30px;
+    text-align:center;
+    color:#666;
+}
+
+.login-link{
+    color:#8B5A3C;
+    text-decoration:none;
+    font-weight:600;
+}
+
+.login-link:hover{
+    text-decoration:underline;
 }
 
 </style>
