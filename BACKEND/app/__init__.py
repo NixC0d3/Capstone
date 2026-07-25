@@ -15,6 +15,9 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
+    # Load models for migrations
+    from app import models
+
     # API route files only
     from app.routes.auth_routes import auth_bp
     from app.routes.organisation_routes import organisation_bp
@@ -24,7 +27,7 @@ def create_app():
     from app.routes.admin_routes import admin_bp
     from app.routes.recommendation_routes import recommendation_bp
     from app.routes.report_routes import monthly_report_bp
-    from app.routes.engagement_routes import engagement_bp
+    from app.routes.engagement_route import engagement_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(organisation_bp, url_prefix="/api/organisations")

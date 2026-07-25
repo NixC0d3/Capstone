@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.extensions import db
-from app.models import User, Role, UserPreference, UserSkill, Category
+from app.models import User, Role, UserPreference, UserSkill, Category, Location
 
 auth_bp = Blueprint("auth_bp", __name__)
 
@@ -13,6 +13,7 @@ def register():
     last_name = data.get("last_name", "").strip()
     email = data.get("email", "").strip().lower()
     password = data.get("password", "").strip()
+    location_id = data.get("location_id")
 
     if not first_name or not last_name or not email or not password:
         return jsonify(error="Missing required fields"), 400
@@ -44,6 +45,7 @@ def register():
     try:
         user = User(
             role_id=role_id,
+            location_id=data.get("location_id"),
             first_name=first_name,
             last_name=last_name,
             email=email,

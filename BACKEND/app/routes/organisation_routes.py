@@ -62,14 +62,11 @@ def get_organisation(organisation_id):
 @organisation_bp.route("/locations", methods=["GET"])
 def get_locations():
 
-    locations = Location.query.with_entities(
-        Location.parish
-    ).distinct().order_by(
-        Location.parish.asc()
-    ).all()
+    locations = Location.query.all()
 
     return jsonify([
         {
+            "location_id": location.location_id,
             "parish": location.parish
         }
         for location in locations

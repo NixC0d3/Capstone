@@ -24,11 +24,15 @@ class User(db.Model, SerializerMixin):
 
     user_id = db.Column(db.Integer, primary_key=True)
     role_id = db.Column(db.Integer, db.ForeignKey("roles.role_id"), nullable=False)
+    location_id = db.Column(db.Integer,db.ForeignKey("locations.location_id"),nullable=True)
     first_name = db.Column(db.String(80), nullable=False)
     last_name = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    location = db.relationship("Location",backref="users")
+    preferences = db.relationship("UserPreference",backref="user",lazy=True)
+    skills = db.relationship("UserSkill",backref="user",lazy=True)
 
 class Category(db.Model, SerializerMixin):
     __tablename__ = "categories"
