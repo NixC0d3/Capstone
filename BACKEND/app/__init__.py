@@ -27,7 +27,7 @@ def create_app():
     from app.routes.admin_routes import admin_bp
     from app.routes.recommendation_routes import recommendation_bp
     from app.routes.report_routes import monthly_report_bp
-    from app.routes.engagement_route import engagement_bp
+    from app.routes.engagement_routes import engagement_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(organisation_bp, url_prefix="/api/organisations")
@@ -36,9 +36,9 @@ def create_app():
     app.register_blueprint(message_bp, url_prefix="/api/messages")
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
     app.register_blueprint(recommendation_bp, url_prefix="/api/recommendations")
-    app.register_blueprint(monthly_report_bp)
-    app.register_blueprint(engagement_bp)
-
+    app.register_blueprint(monthly_report_bp, url_prefix="/api/reports")
+    app.register_blueprint(engagement_bp, url_prefix="/api/engagement")
+    
     @app.route("/api/health")
     def health_check():
         return jsonify(message="CivilInfoHub API is running")

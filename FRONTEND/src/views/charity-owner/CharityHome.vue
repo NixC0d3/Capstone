@@ -11,9 +11,9 @@
     />
 
     <EngagementChart
-      :reports="reports"
-      organisationType="charity"
-     />
+	  :report="currentReport"
+	  organisationType="charity"
+	/>
   </div>
   <p v-else>
     Loading dashboard...

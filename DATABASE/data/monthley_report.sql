@@ -23,47 +23,31 @@ VALUES
 (159, 2, 'volunteer_signup', '2026-06-08');
 
 
-
-
-
-
-INSERT INTO monthly_business_reports
-(
-    organisation_id,
-    report_month,
-    report_year,
-    total_views,
-    total_saves,
-    total_messages,
-    total_reviews,
-    total_volunteer_signups,
-    engagement_score,
-    growth_rate,
-    trend_status
-)
+CREATE VIEW organisation_monthly_report_view AS
 SELECT
-    1 AS organisation_id,
-    5 AS report_month,
-    2026 AS report_year,
+    o.organisation_name,
+    m.organisation_id,
+    m.report_month,
+    m.report_year,
+    m.total_views,
+    m.total_saves,
+    m.total_messages,
+    m.total_reviews,
+    m.total_volunteer_signups,
+    m.average_rating,
+    m.bayesian_rating,
+    m.engagement_score,
+    m.trend_score,
+    m.growth_rate,
+    m.trend_status,
+    m.generated_at
+FROM monthly_business_reports m
+JOIN organisations o
+    ON m.organisation_id = o.organisation_id;
+    
+    
 
-    COUNT(*) FILTER (WHERE engagement_type = 'view') AS total_views,
-    COUNT(*) FILTER (WHERE engagement_type = 'save') AS total_saves,
-    COUNT(*) FILTER (WHERE engagement_type = 'message') AS total_messages,
-    COUNT(*) FILTER (WHERE engagement_type = 'review') AS total_reviews,
-    COUNT(*) FILTER (WHERE engagement_type = 'volunteer_signup') AS total_volunteer_signups,
-
-    (
-        COUNT(*) FILTER (WHERE engagement_type = 'view') * 1
-        + COUNT(*) FILTER (WHERE engagement_type = 'save') * 3
-        + COUNT(*) FILTER (WHERE engagement_type = 'message') * 4
-        + COUNT(*) FILTER (WHERE engagement_type = 'review') * 5
-        + COUNT(*) FILTER (WHERE engagement_type = 'volunteer_signup') * 5
-    ) AS engagement_score,
-
-    0 AS growth_rate,
-    'New / Base Month' AS trend_status
-
-FROM engagement_logs
-WHERE organisation_id = 1
-  AND created_at >= '2026-05-01'
-  AND created_at < '2026-06-01';
+SELECT *
+FROM organisation_monthly_report_view
+WHERE organisation_id = 159
+ORDER BY report_year, report_month;

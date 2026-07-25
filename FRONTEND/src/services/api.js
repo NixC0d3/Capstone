@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api";
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -36,7 +36,7 @@ export const api = {
   },
 
   getMonthlyReport(id){
-    return request(`/monthly-report/${id}`);
+    return request(`/reports/monthly-report/${id}`);
 },
   registerUser(payload){
     return request("/auth/register", {
