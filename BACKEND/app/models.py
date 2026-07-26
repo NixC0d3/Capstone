@@ -102,16 +102,27 @@ class OrganisationImage(db.Model, SerializerMixin):
     image_type = db.Column(db.String(50), default="gallery")
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-class RatingReview(db.Model, SerializerMixin):
+class RatingReview(db.Model):
     __tablename__ = "ratings_reviews"
 
     review_id = db.Column(db.Integer, primary_key=True)
     organisation_id = db.Column(db.Integer, db.ForeignKey("organisations.organisation_id"), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), nullable=False)
     rating = db.Column(db.Integer, nullable=False)
-    review_text = db.Column(db.Text, nullable=True)
-    is_hidden = db.Column(db.Boolean, default=False)
+    review_text = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_hidden = db.Column(db.Boolean, default=False)
+
+    def to_dict(self):
+        return {
+            "review_id": self.review_id,
+            "organisation_id": self.organisation_id,
+            "user_id": self.user_id,
+            "rating": self.rating,
+            "review_text": self.review_text,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "is_hidden": self.is_hidden
+        }
 
 class ReviewFlag(db.Model, SerializerMixin):
     __tablename__ = "review_flags"

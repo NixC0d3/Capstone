@@ -1,36 +1,53 @@
 from flask import Blueprint, request, jsonify
 from app.extensions import db
-from app.models import RatingReview, ReviewFlag
+from app.models import RatingReview
+
 
 review_bp = Blueprint("review_bp", __name__)
+
 
 @review_bp.route("", methods=["POST"])
 def create_review():
     data = request.get_json() or {}
 
+    organisation_id = data.get("organisation_id")
+    user_id = data.get("user_id")
+    rating = data.get("rating")
+    review_text = data.get("review_text", "")
+
+    if not organisation_id:
+        return jsonify(error="organisation_id is required"), 400
+
+    if not user_id:
+        return jsonify(error="user_id is required"), 400
+
+    if rating is None:
+        return jsonify(error="rating is required"), 400
+
     review = RatingReview(
-        organisation_id=data.get("organisation_id"),
-        user_id=data.get("user_id"),
-        rating=data.get("rating"),
-        review_text=data.get("review_text")
+        organisation_id=int(organisation_id),
+        user_id=int(user_id),
+        rating=int(rating),
+        review_text=review_text,
+        is_hidden=False
     )
 
     db.session.add(review)
     db.session.commit()
 
-    return jsonify(message="Review added", review=review.to_dict()), 201
+    return jsonify(
+        message="Review submitted successfully",
+        review=review.to_dict()
+    ), 201
 
-@review_bp.route("/<int:review_id>/flag", methods=["POST"])
-def flag_review(review_id):
-    data = request.get_json() or {}
 
-    flag = ReviewFlag(
-        review_id=review_id,
-        flagged_by_user_id=data.get("flagged_by_user_id"),
-        reason=data.get("reason", "")
-    )
+@review_bp.route("/organisation/<int:organisation_id>", methods=["GET"])
+def get_reviews_for_organisation(organisation_id):
+    reviews = RatingReview.query.filter_by(
+        organisation_id=organisation_id,
+        is_hidden=False
+    ).order_by(
+        RatingReview.created_at.desc()
+    ).all()
 
-    db.session.add(flag)
-    db.session.commit()
-
-    return jsonify(message="Review flagged", flag=flag.to_dict()), 201
+    return jsonify([review.to_dict() for review in reviews]), 200

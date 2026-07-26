@@ -46,12 +46,44 @@ export const api = {
     });
   },
 
-  getRecommendations(userId) {
-    return request(`/recommendations/${userId}`);
+  getRecommendations(userId, type = "business", limit = 6) {
+  return request(`/recommendations/user/${userId}?type=${type}&limit=${limit}`);
+  },
+  
+  createReview(reviewData) {
+    return request("/reviews", {
+      method: "POST",
+      body: JSON.stringify(reviewData)
+    });
+  },
+
+  getOrganisationReviews(organisationId) {
+    return request(`/reviews/organisation/${organisationId}`);
   },
 
   getVolunteerNeeds() {
     return request("/volunteers/needs");
+  },
+  
+  logEngagement(data) {
+    return request("/engagement/log", {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
+  },
+  
+  saveOrganisation(data) {
+    return request("/saves", {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
+  },
+
+  unsaveOrganisation(data) {
+    return request("/saves", {
+      method: "DELETE",
+      body: JSON.stringify(data)
+    });
   },
 
   calculateTrendScore(payload) {
@@ -63,6 +95,13 @@ export const api = {
 
   getEngagementWeights() {
     return request("/admin/engagement-weights");
+  },
+  
+  sendMessage(data) {
+    return request("/messages/send", {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
   },
 
   updateEngagementWeights(payload) {

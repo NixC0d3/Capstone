@@ -162,9 +162,11 @@ onMounted(async()=>{
     await api.getOrganisation(
     route.params.id
   );
-  // later this will come from reviews table
-  reviews.value = organisation.value.reviews || [];
-
+  // this will come from reviews table
+  reviews.value = await api.getOrganisationReviews(route.params.id);
+  
+  await logProfileView();
+  
   }catch(error){
     console.error(error);
   }finally{
@@ -172,11 +174,6 @@ onMounted(async()=>{
   }
 });
 
-function saveOrganisation(){
-  console.log(
-    "Saved:", organisation.value.organisation_name
-  );
-}
 
 function openMessages(){
   router.push({
@@ -187,14 +184,115 @@ function openMessages(){
   });
 }
 
-function addReview(review){
-    const newReview = {
-        review_id: Date.now(),
-        organisation_id: organisation.value.organisation_id,
-        rating: review.rating,
-        review_text: review.review_text
-    };
-    reviews.value.push(newReview);
+async function addReview(review) {
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user || !user.user_id) {
+      alert("You must be logged in to submit a review.");
+      return;
+    }
+
+    await api.createReview({
+      organisation_id: organisation.value.organisation_id,
+      user_id: user.user_id,
+      rating: Number(review.rating),
+      review_text: review.review_text
+    });
+
+    alert("Review submitted successfully.");
+
+    reviews.value = await api.getOrganisationReviews(
+      organisation.value.organisation_id
+    );
+
+  } catch (error) {
+    console.error("Error submitting review:", error);
+    alert("Review was not submitted. Check browser console and backend terminal.");
+  }
+}
+
+
+async function logProfileView() {
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user || !user.user_id || !organisation.value) {
+      return;
+    }
+
+    // Prevent repeated logs when refreshing the same page too much
+    const viewKey = `viewed_org_${organisation.value.organisation_id}_user_${user.user_id}`;
+
+    if (sessionStorage.getItem(viewKey)) {
+      return;
+    }
+
+    await api.logEngagement({
+      organisation_id: organisation.value.organisation_id,
+      user_id: user.user_id,
+      engagement_type: "profile_view"
+    });
+
+    sessionStorage.setItem(viewKey, "true");
+
+    console.log("Profile view logged");
+  } catch (error) {
+    console.error("Error logging profile view:", error);
+  }
+}
+
+
+async function sendMessage() {
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user || !user.user_id) {
+      alert("You must be logged in to send a message.");
+      return;
+    }
+
+    const messageText = prompt("Enter your message:");
+
+    if (!messageText || !messageText.trim()) {
+      return;
+    }
+
+    await api.sendMessage({
+      user_id: user.user_id,
+      organisation_id: organisation.value.organisation_id,
+      message_text: messageText
+    });
+
+    alert("Message sent successfully.");
+
+  } catch (error) {
+    console.error("Error sending message:", error);
+    alert("Message failed. Check console/backend terminal.");
+  }
+}
+
+
+async function saveOrganisation() {
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user || !user.user_id) {
+      alert("You must be logged in to save an organisation.");
+      return;
+    }
+
+    await api.saveOrganisation({
+      user_id: user.user_id,
+      organisation_id: organisation.value.organisation_id
+    });
+
+    alert("Organisation saved.");
+
+  } catch (error) {
+    console.error("Error saving organisation:", error);
+    alert("Save failed. Check console/backend terminal.");
+  }
 }
 
 </script>

@@ -4,41 +4,27 @@
     <p class="subtitle">
       Find small businesses worth supporting
     </p>
+
     <h1>Explore your Community</h1>
 
     <SearchBar
-        v-model:searchTerm="searchTerm"
-        v-model:category="selectedCategory"
-        v-model:location="selectedLocation"
-        :categories="categories"
-        :locations="locations"
-        @search="searchOrganizations"
+      v-model:searchTerm="searchTerm"
+      v-model:category="selectedCategory"
+      v-model:location="selectedLocation"
+      :categories="categories"
+      :locations="locations"
+      @search="searchOrganizations"
     />
 
+    <!-- SEARCH RESULTS SECTION -->
     <div v-if="hasSearched">
-        <button class="back-button" @click="goBack">
-            ← Clear Search
-        </button>
+      <button class="back-button" @click="goBack">
+        ← Clear Search
+      </button>
 
       <h2>Search Results</h2>
 
       <div v-if="organisations.length" class="card-grid">
-        <OrganisationCard
-            v-for="org in organisations"
-            :key="org.organisation_id"
-            :organisation="org"
-        />
-      </div>
-
-      <p v-else>
-        No organisations match your search.
-      </p>
-
-    </div>
-
-    <div v-else>
-      <h2>Recommended for you</h2>
-      <div class="card-grid">
         <OrganisationCard
           v-for="org in organisations"
           :key="org.organisation_id"
@@ -46,14 +32,33 @@
         />
       </div>
 
+      <p v-else>
+        No organisations match your search.
+      </p>
+    </div>
+
+    <!-- RECOMMENDATIONS SECTION -->
+    <div v-else>
+      <h2>Recommended for you</h2>
+
+      <div v-if="recommendedOrganisations.length" class="card-grid">
+        <OrganisationCard
+          v-for="org in recommendedOrganisations"
+          :key="org.organisation_id"
+          :organisation="org"
+        />
+      </div>
+
+      <p v-else>
+        No recommendations available yet.
+      </p>
     </div>
 
   </div>
 </template>
 
 <script setup>
-
-import { ref, computed, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 
 import SearchBar from "@/components/SearchBar.vue";
 import OrganisationCard from "@/components/OrganisationCard.vue";
@@ -62,6 +67,8 @@ import { api } from "@/services/api";
 
 
 const organisations = ref([]);
+const recommendedOrganisations = ref([]);
+
 const categories = ref([]);
 const locations = ref([]);
 
@@ -73,75 +80,90 @@ const hasSearched = ref(false);
 
 
 /*
-    GET ORGANISATIONS FROM DATABASE
+  LOAD RECOMMENDATIONS
 */
-onMounted(async () => {
+async function loadRecommendations() {
   try {
+    const user = JSON.parse(localStorage.getItem("user"));
 
-    const organisationResponse = await api.getOrganisations({type: "busines"});
-    organisations.value = organisationResponse;
+    console.log("Logged in user:", user);
 
+    if (!user || !user.user_id) {
+      console.log("No logged-in user found in localStorage.");
+      return;
+    }
+
+    const data = await api.getRecommendations(user.user_id, "business", 6);
+
+    console.log("Recommendations from backend:", data);
+
+    recommendedOrganisations.value = data;
+  } catch (error) {
+    console.error("Error loading recommendations:", error);
+  }
+}
+
+
+/*
+  LOAD CATEGORIES AND LOCATIONS
+*/
+async function loadFilters() {
+  try {
     categories.value = await api.getCategories();
     locations.value = await api.getLocations();
 
-  } catch(error){
-    console.error(error);
+    console.log("Categories:", categories.value);
+    console.log("Locations:", locations.value);
+  } catch (error) {
+    console.error("Error loading filters:", error);
   }
+}
+
+
+/*
+  PAGE LOAD
+*/
+onMounted(async () => {
+  await loadFilters();
+  await loadRecommendations();
 });
 
 
 /*
-    FILTER DATABASE RESULTS
+  SEARCH ORGANISATIONS FROM DATABASE
 */
-const filteredOrganisations = computed(() => {
-  return organisations.value.filter(org => {
-    const name =
-      (
-        org.organisation_name || ""
-      ).toLowerCase();
-    const category =
-      (
-        org.category_name || ""
-      ).toLowerCase();
-    const location =
-      (
-        org.parish || ""
-      ).toLowerCase();
-
-      const matchesSearch = name.includes(
-        searchTerm.value.toLowerCase()
-      );
-      const matchesCategory = !selectedCategory.value || category === selectedCategory.value.toLowerCase();
-
-      const matchesLocation = !selectedLocation.value || location === selectedLocation.value.toLowerCase();
-  
-      return (
-        matchesSearch &&
-        matchesCategory &&
-        matchesLocation
-      );
-  });
-});
-
 async function searchOrganizations() {
-  hasSearched.value = true;
+  try {
+    hasSearched.value = true;
 
-  organisations.value = await api.getOrganisations({
-    search: searchTerm.value,
-    category_id: selectedCategory.value,
-    parish: selectedLocation.value
-  });
+    organisations.value = await api.getOrganisations({
+      search: searchTerm.value,
+      category_id: selectedCategory.value,
+      parish: selectedLocation.value,
+      type: "business"
+    });
+
+    console.log("Search results:", organisations.value);
+  } catch (error) {
+    console.error("Error searching organisations:", error);
+  }
 }
 
+
+/*
+  CLEAR SEARCH AND RETURN TO RECOMMENDATIONS
+*/
 async function goBack() {
   hasSearched.value = false;
+
   searchTerm.value = "";
   selectedCategory.value = "";
   selectedLocation.value = "";
 
-  organisations.value = await api.getOrganisations();
-}
+  organisations.value = [];
 
+  await loadRecommendations();
+}
 </script>
 
 <style scoped>
