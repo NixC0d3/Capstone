@@ -97,6 +97,11 @@ export const api = {
     return request("/admin/engagement-weights");
   },
   
+  getConversation(userId, organisationId) {
+    return request(`/messages/conversation?user_id=${userId}&organisation_id=${organisationId}`);
+  },
+
+  
   sendMessage(data) {
     return request("/messages/send", {
       method: "POST",

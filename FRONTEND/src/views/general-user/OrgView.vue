@@ -39,8 +39,16 @@
       </h1>
 
       <div class="rating">
-        ⭐ 
-        {{ organisation.rating || "No ratings yet" }}
+        <span class="star">★</span>
+
+        <span v-if="reviewCount === 0">
+          No ratings yet
+        </span>
+
+        <span v-else>
+          {{ averageRating.toFixed(1) }}/5 based on {{ reviewCount }}
+          {{ reviewCount === 1 ? "review" : "reviews" }}
+        </span>
       </div>
 
       <div class="location">
@@ -92,8 +100,9 @@
     </div>
       <!-- BUSINESS ONLY -->
       <button
-      v-if="organisation.organisation_type === 'business'"
-      class="contact-btn"
+        v-if="organisation.organisation_type === 'business'"
+        class="contact-btn"
+        @click="openMessages"
       >
         Get in Touch
       </button>
@@ -146,7 +155,7 @@
 <script setup>
 import ReviewSection from "@/components/ReviewSection.vue";
 
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api } from "@/services/api";
 
@@ -155,6 +164,22 @@ const router = useRouter();
 const organisation = ref({});
 const reviews = ref([]);
 const loading = ref(true);
+
+const reviewCount = computed(() => {
+  return reviews.value.length;
+});
+
+const averageRating = computed(() => {
+  if (reviews.value.length === 0) {
+    return 0;
+  }
+
+  const total = reviews.value.reduce((sum, review) => {
+    return sum + Number(review.rating);
+  }, 0);
+
+  return total / reviews.value.length;
+});
 
 onMounted(async()=>{
   try{
@@ -175,13 +200,8 @@ onMounted(async()=>{
 });
 
 
-function openMessages(){
-  router.push({
-    path: "/generaluser/inbox",
-    query:{
-      organisation: organisation.value.organisation_id
-    }
-  });
+function openMessages() {
+  router.push(`/generaluser/inbox?organisation=${organisation.value.organisation_id}`);
 }
 
 async function addReview(review) {
@@ -242,35 +262,6 @@ async function logProfileView() {
   }
 }
 
-
-async function sendMessage() {
-  try {
-    const user = JSON.parse(localStorage.getItem("user"));
-
-    if (!user || !user.user_id) {
-      alert("You must be logged in to send a message.");
-      return;
-    }
-
-    const messageText = prompt("Enter your message:");
-
-    if (!messageText || !messageText.trim()) {
-      return;
-    }
-
-    await api.sendMessage({
-      user_id: user.user_id,
-      organisation_id: organisation.value.organisation_id,
-      message_text: messageText
-    });
-
-    alert("Message sent successfully.");
-
-  } catch (error) {
-    console.error("Error sending message:", error);
-    alert("Message failed. Check console/backend terminal.");
-  }
-}
 
 
 async function saveOrganisation() {

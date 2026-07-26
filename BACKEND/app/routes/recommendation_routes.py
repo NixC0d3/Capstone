@@ -43,6 +43,7 @@ def recommend_for_user(user_id):
                         WHEN e.engagement_type = 'save' THEN 3
                         WHEN e.engagement_type = 'message' THEN 4
                         WHEN e.engagement_type = 'rating' THEN 5
+                        WHEN e.engagement_type = 'review' THEN 6
                         WHEN e.engagement_type = 'volunteer_signup' THEN 5
                         ELSE 0
                     END
