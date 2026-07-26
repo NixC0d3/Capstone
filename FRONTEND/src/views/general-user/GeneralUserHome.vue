@@ -22,9 +22,9 @@
 
       <h2>Search Results</h2>
 
-      <div v-if="filteredOrganisations.length" class="card-grid">
+      <div v-if="organisations.length" class="card-grid">
         <OrganisationCard
-            v-for="org in filteredOrganisations"
+            v-for="org in organisations"
             :key="org.organisation_id"
             :organisation="org"
         />
@@ -123,15 +123,23 @@ const filteredOrganisations = computed(() => {
   });
 });
 
-function searchOrganizations(){
+async function searchOrganizations() {
   hasSearched.value = true;
+
+  organisations.value = await api.getOrganisations({
+    search: searchTerm.value,
+    category_id: selectedCategory.value,
+    parish: selectedLocation.value
+  });
 }
 
-function goBack(){
+async function goBack() {
   hasSearched.value = false;
   searchTerm.value = "";
   selectedCategory.value = "";
   selectedLocation.value = "";
+
+  organisations.value = await api.getOrganisations();
 }
 
 </script>

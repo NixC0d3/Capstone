@@ -1,15 +1,9 @@
 from flask import Blueprint, request, jsonify
-import psycopg2
+from app.extensions import db
+from app.models import EngagementLog
 
 
-engagement_bp = Blueprint("engagement", __name__)
-
-
-DB_NAME = "capstone"
-DB_USER = "postgres"
-DB_PASSWORD = "your_password_here"
-DB_HOST = "localhost"
-DB_PORT = "5432"
+engagement_bp = Blueprint("engagement_bp", __name__)
 
 
 ALLOWED_ENGAGEMENT_TYPES = {
@@ -21,49 +15,37 @@ ALLOWED_ENGAGEMENT_TYPES = {
 }
 
 
-def get_connection():
-    return psycopg2.connect(
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        host=DB_HOST,
-        port=DB_PORT
-    )
-
-
-@engagement_bp.route("/engagement/log", methods=["POST"])
+@engagement_bp.route("/log", methods=["POST"])
 def log_engagement():
-    data = request.get_json()
+    data = request.get_json() or {}
 
     organisation_id = data.get("organisation_id")
     user_id = data.get("user_id")
     engagement_type = data.get("engagement_type")
 
+    if not organisation_id:
+        return jsonify(error="organisation_id is required"), 400
+
+    if not user_id:
+        return jsonify(error="user_id is required"), 400
+
     if engagement_type not in ALLOWED_ENGAGEMENT_TYPES:
-        return jsonify({"error": "Invalid engagement type"}), 400
+        return jsonify(error="Invalid engagement type"), 400
 
-    connection = get_connection()
-    cursor = connection.cursor()
-
-    cursor.execute(
-        """
-        INSERT INTO engagement_logs
-        (
-            organisation_id,
-            user_id,
-            engagement_type,
-            created_at
-        )
-        VALUES
-        (
-            %s, %s, %s, CURRENT_TIMESTAMP
-        );
-        """,
-        (organisation_id, user_id, engagement_type)
+    engagement = EngagementLog(
+        organisation_id=organisation_id,
+        user_id=user_id,
+        engagement_type=engagement_type
     )
 
-    connection.commit()
-    cursor.close()
-    connection.close()
+    db.session.add(engagement)
+    db.session.commit()
 
-    return jsonify({"message": "Engagement logged successfully"}), 201
+    return jsonify(
+        message="Engagement logged successfully",
+        engagement={
+            "organisation_id": organisation_id,
+            "user_id": user_id,
+            "engagement_type": engagement_type
+        }
+    ), 201

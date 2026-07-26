@@ -4,7 +4,7 @@
     <div class="profile-header">
         <div class="avatar"> {{initials}} </div>
 
-        <h1>{{ user.first_name }} {{ user.last_name }}</h1>
+        <h1>{{ user.display_name || user.first_name + " " + user.last_name }}</h1>
 
         <p> {{user.email}}</p>
 
@@ -151,13 +151,18 @@ const volunteerAllocations = ref([
     }
 ]);
 
-const initials = computed(()=>{
+const initials = computed(() => {
+    const name =
+        user.value.display_name ||
+        `${user.value.first_name || ""} ${user.value.last_name || ""}`.trim();
 
-    return (
-        user.value.first_name[0] +
-        user.value.last_name[0]
-    ).toUpperCase();
-
+    return name
+        .split(" ")
+        .filter(Boolean)
+        .map(word => word.charAt(0))
+        .join("")
+        .substring(0, 2)
+        .toUpperCase();
 });
 
 </script>

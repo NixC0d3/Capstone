@@ -33,6 +33,8 @@ class User(db.Model, SerializerMixin):
     location = db.relationship("Location",backref="users")
     preferences = db.relationship("UserPreference",backref="user",lazy=True)
     skills = db.relationship("UserSkill",backref="user",lazy=True)
+    display_name = db.Column(db.String(150))
+    last_login_at = db.Column(db.DateTime)
 
 class Category(db.Model, SerializerMixin):
     __tablename__ = "categories"
@@ -71,8 +73,6 @@ class Location(db.Model, SerializerMixin):
     parish = db.Column(db.String(100), nullable=True)
     town = db.Column(db.String(100), nullable=True)
     address = db.Column(db.Text, nullable=True)
-    latitude = db.Column(db.Float, nullable=True)
-    longitude = db.Column(db.Float, nullable=True)
 
 class Organisation(db.Model, SerializerMixin):
     __tablename__ = "organisations"

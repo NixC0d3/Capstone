@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app.extensions import db
 from app.models import User, Role, UserPreference, UserSkill, Category, Location
+from datetime import datetime
 
 auth_bp = Blueprint("auth_bp", __name__)
 
@@ -208,6 +209,10 @@ def login():
 
     if user.password_hash != password:
         return jsonify(error="Invalid email or password"), 401
+
+    # Update last login time after successful login
+    user.last_login_at = datetime.utcnow()
+    db.session.commit()
 
     return jsonify(
         message="Login successful",

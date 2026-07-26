@@ -26,7 +26,7 @@ class="card"
 
 
         <div class="category">
-            {{ organisation.category_name }}
+            {{ displayCategories }}
         </div>
 
         <div class="rating">
@@ -52,6 +52,8 @@ class="card"
 
 <script setup>
 import { useRouter } from "vue-router"
+import { computed } from "vue";
+
 const router = useRouter()
 
 const props = defineProps({
@@ -59,6 +61,16 @@ const props = defineProps({
         type: Object,
         required: true
     }
+});
+
+const displayCategories = computed(() => {
+  if (props.organisation.categories && props.organisation.categories.length > 0) {
+    return props.organisation.categories
+      .map(category => category.category_name)
+      .join(", ");
+  }
+
+  return props.organisation.category_name || "Uncategorized";
 });
 
 function openOrganization() {

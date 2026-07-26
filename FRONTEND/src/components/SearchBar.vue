@@ -20,7 +20,7 @@
       <option
         v-for="category in categories"
         :key="category.category_id"
-        :value="category.category_name"
+        :value="category.category_id"
       >
         {{category.category_name}}
       </option>
@@ -34,7 +34,7 @@
       <option value="">All Locations</option>
       <option
       v-for="location in locations"
-      :key="location.parish"
+      :key="location.id"
       :value="location.parish"
       >
       {{location.parish}}

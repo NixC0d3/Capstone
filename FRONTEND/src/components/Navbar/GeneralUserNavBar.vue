@@ -43,18 +43,22 @@ const user = JSON.parse(
     localStorage.getItem("user")
 );
 
-const initials = computed(()=>{
-    if(!user){
+const initials = computed(() => {
+    if (!user) {
         return "U";
     }
 
-    const first =
-    user.first_name?.charAt(0) || "";
+    const name =
+        user.display_name ||
+        `${user.first_name || ""} ${user.last_name || ""}`.trim();
 
-    const last =
-    user.last_name?.charAt(0) || "";
-
-    return (first + last).toUpperCase();
+    return name
+        .split(" ")
+        .filter(Boolean)
+        .map(word => word.charAt(0))
+        .join("")
+        .substring(0, 2)
+        .toUpperCase();
 });
 
 

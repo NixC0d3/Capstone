@@ -19,8 +19,9 @@ async function request(path, options = {}) {
 }
 
 export const api = {
-  getOrganisations() {
-    return request("/organisations");
+  getOrganisations(params = {}) {
+  const query = new URLSearchParams(params).toString();
+  return request(`/organisations${query ? `?${query}` : ""}`);
   },
 
   getOrganisation(id) {
