@@ -51,9 +51,16 @@ const currentReport = ref({
 
 onMounted(async () => {
   try {
-    reports.value = await api.getMonthlyReport(organisationId)
-    if (reports.value.length > 0) {
-      currentReport.value = reports.value[reports.value.length - 1]
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    // get the business owned by this user
+    const organisation = await api.getOwnerOrganisation(user.user_id);
+
+    // now we know the organisation id
+    const reports = await api.getMonthlyReport(organisation.organisation_id);
+
+    if (reports.length > 0) {
+      currentReport.value = reports[report.length - 1]
     }
   } catch (error) {
     console.error("Failed to load report:", error)

@@ -12,6 +12,19 @@
         <router-link to="/charity-user/inbox">
             Inbox
         </router-link>
+        <router-link
+            v-if="hasOrganisation"
+            to="/charity-user/edit-organisation"
+        >
+            My Charity
+        </router-link>
+
+        <router-link
+            v-else
+            to="/charity-user/create-organisation"
+        >
+            Create Charity
+        </router-link>
     </div>
 
     <div class="user-actions">
@@ -29,8 +42,10 @@
 
 <script setup>
 import { useRouter } from "vue-router";
-import { computed } from "vue";
+import { computed, ref, onMounted } from "vue";
+import { api } from "@/services/api";
 const router = useRouter();
+const hasOrganisation = ref(false);
 
 const user = JSON.parse(
     localStorage.getItem("user")
@@ -67,6 +82,15 @@ function goInbox(){
         router.push("/generaluser/inbox");
     }
 }
+
+onMounted(async () => {
+    try {
+        const organisation = await api.getOwnerOrganisation(user.user_id);
+        hasOrganisation.value = !!organisation;
+    } catch (error) {
+        hasOrganisation.value = false;
+    }
+});
 
 function logout(){
     // later this will clear authentication
