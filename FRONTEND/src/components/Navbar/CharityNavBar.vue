@@ -9,6 +9,9 @@
         <router-link to="/charity-user/home">
             Home
         </router-link>
+        <router-link to="/charity-user/inbox">
+            Inbox
+        </router-link>
     </div>
 
     <div class="user-actions">
@@ -46,6 +49,23 @@ const initials = computed(()=>{
 
 function goProfile(){
     router.push("/charity-user/profile");
+}
+function goInbox(){
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if(!user){
+        router.push("/login");
+        return;
+    }
+    if(user.role === "charity"){
+        router.push("/charity-user/inbox");
+    }
+    else if(user.role === "business"){
+        router.push("/business-user/inbox");
+    }
+    else{
+        router.push("/generaluser/inbox");
+    }
 }
 
 function logout(){

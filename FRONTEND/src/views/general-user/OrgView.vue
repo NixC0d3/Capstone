@@ -85,7 +85,7 @@
 
       <button 
         class="message-btn"
-        @click="openMessages"
+        @click="goInbox"
         >
           ✉
       </button>
@@ -193,8 +193,27 @@ onMounted(async()=>{
 });
 
 
-function openMessages() {
-  router.push(`/generaluser/inbox?organisation=${organisation.value.organisation_id}`);
+function goInbox(){
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if(!user){
+        router.push("/login");
+        return;
+    }
+    const organisationId = organisation.value.organisation_id;
+
+    let inboxRoute = "/generaluser/inbox";
+
+    if(user.role === "charity"){
+        inboxRoute = "/charity-user/inbox";
+    }
+    else if(user.role === "business"){
+        inboxRoute = "/business-user/inbox";
+    }
+    router.push({
+      path: inboxRoute,
+      query: {organisation: organisationId}
+    });
 }
 
 async function addReview(review) {

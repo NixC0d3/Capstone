@@ -237,7 +237,21 @@ function openOrganisation(id){
 }
 
 function goInbox(){
-    router.push("/generaluser/inbox");
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if(!user){
+        router.push("/login");
+        return;
+    }
+    if(user.role === "charity"){
+        router.push("/charity-user/inbox");
+    }
+    else if(user.role === "business"){
+        router.push("/business-user/inbox");
+    }
+    else{
+        router.push("/generaluser/inbox");
+    }
 }
 
 onMounted(() => {

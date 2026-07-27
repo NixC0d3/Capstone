@@ -17,18 +17,6 @@
             Profile
         </button>
 
-        <button
-            :class="{ active: currentTab === 'saved' }"
-            @click="currentTab = 'saved'"
-        >
-            Saved
-        </button>
-
-        <button
-            @click="goInbox"
-        >
-            Inbox
-        </button>
 
         <button
             :class="{ active: currentTab === 'volunteer' }"
@@ -125,29 +113,6 @@
             </p>
         </div>
 
-
-        <div v-else-if="currentTab === 'inbox'">
-            <h2>Inbox</h2>
-            <div
-                v-if="messages.length"
-                v-for="message in messages"
-                :key="message.message_id"
-            >
-                <p>
-                    <strong>
-                        {{ message.organisation_name }}
-                    </strong>
-                </p>
-                <p>
-                    {{ message.message_text }}
-                </p>
-            </div>
-            <p v-else>
-                No messages yet.
-            </p>
-        </div>
-
-
         <div v-else-if="currentTab === 'volunteer'">
 
             <h2>Volunteer Allocations</h2>
@@ -234,10 +199,6 @@ async function loadProfile(){
 
 function openOrganisation(id){
     router.push(`/organisation/${id}`);
-}
-
-function goInbox(){
-    router.push("/generaluser/inbox");
 }
 
 onMounted(() => {

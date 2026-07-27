@@ -55,6 +55,14 @@ const router = createRouter({
       component: Inbox
     },
     {
+      path: "/business-user/inbox",
+      component: Inbox
+    },
+    {
+      path: "/charity-user/inbox",
+      component: Inbox
+    },
+    {
       path: "/business-user/home",
       component: BusinessHome
     },
