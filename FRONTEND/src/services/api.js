@@ -70,9 +70,28 @@ export const api = {
   },
 
   // Volunteers
-  getVolunteerNeeds() {
-    return request("/volunteers/needs");
+  createVolunteerNeed(data) {
+    return request("/volunteer-allocation/needs", {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
   },
+  
+  getVolunteerNeeds(charityUserId) {
+    return request(`/volunteer-allocation/needs?charity_user_id=${charityUserId}`);
+  },
+
+  getVolunteerMatches(volunteerNeedId, charityUserId) {
+    return request(`/volunteer-allocation/need/${volunteerNeedId}/matches?charity_user_id=${charityUserId}`);
+  },
+
+  allocateVolunteer(volunteerNeedId, data) {
+    return request(`/volunteer-allocation/need/${volunteerNeedId}/allocate`, {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
+  },
+  
   // Saved Organisations
   saveOrganisation(data) {
     return request("/saves", {

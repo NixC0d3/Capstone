@@ -22,7 +22,7 @@ def create_app():
     from app.routes.auth_routes import auth_bp
     from app.routes.organisation_routes import organisation_bp
     from app.routes.review_routes import review_bp
-    from app.routes.volunteer_routes import volunteer_bp
+    from app.routes.volunteer_routes import volunteer_allocation_bp    
     from app.routes.message_routes import message_bp
     from app.routes.admin_routes import admin_bp
     from app.routes.recommendation_routes import recommendation_bp
@@ -33,7 +33,7 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(organisation_bp, url_prefix="/api/organisations")
     app.register_blueprint(review_bp, url_prefix="/api/reviews")
-    app.register_blueprint(volunteer_bp, url_prefix="/api/volunteers")
+    app.register_blueprint(volunteer_allocation_bp,url_prefix="/api/volunteer-allocation")    
     app.register_blueprint(message_bp, url_prefix="/api/messages")
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
     app.register_blueprint(recommendation_bp, url_prefix="/api/recommendations")

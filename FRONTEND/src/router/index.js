@@ -82,6 +82,12 @@ const router = createRouter({
     {
       path: "/charity-user/profile",
       component: CharityProfile
+    },
+    
+    {
+      path: "/charity-user/volunteer-matches",
+      name: "CharityVolunteerMatches",
+      component: () => import("@/views/charity-owner/VolunteerMatches.vue")
     }
 
     

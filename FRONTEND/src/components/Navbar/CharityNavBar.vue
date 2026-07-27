@@ -12,6 +12,9 @@
         <router-link to="/charity-user/inbox">
             Inbox
         </router-link>
+        <router-link to="/charity-user/volunteer-matches">
+            Volunteer Allocation
+        </router-link>
     </div>
 
     <div class="user-actions">
