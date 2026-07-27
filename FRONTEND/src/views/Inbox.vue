@@ -1,4 +1,12 @@
 <template>
+
+  <button 
+      class="back-btn"
+      @click="$router.back()"
+  >
+      ← Back
+  </button>
+
   <div class="inbox-page">
 
     <!-- LEFT SIDE: Conversation List -->
@@ -236,6 +244,18 @@ onMounted(async () => {
   grid-template-columns: 340px 1fr;
   gap: 25px;
   height: 80vh;
+}
+.back-btn{
+    background:none;
+    border:none;
+    color:#8B5A3C;
+    cursor:pointer;
+    font-size:16px;
+    margin-bottom:25px;
+}
+
+.back-btn:hover{
+    text-decoration:underline;
 }
 
 .conversation-list {

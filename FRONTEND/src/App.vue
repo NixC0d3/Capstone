@@ -1,22 +1,43 @@
 <template>
-  <Navbar v-if="showNavbar" />
+  <BusinessNavBar
+    v-if="showNavbar && isBusinessRoute"
+  />
+
+  <CharityNavBar
+    v-else-if="showNavbar && isCharityRoute"
+  />
+
+  <GeneralUserNavBar
+    v-else-if="showNavbar && isGeneralUserRoute"
+  />
+
   <router-view />
 </template>
-
 
 <script setup>
 
 import { computed } from "vue";
 import { useRoute } from "vue-router";
 
-import Navbar from "@/components/Navbar/GeneralUserNavBar.vue";
-
+import GeneralUserNavBar from "@/components/Navbar/GeneralUserNavBar.vue";
+import BusinessNavBar from "@/components/Navbar/BusinessNavBar.vue";
+import CharityNavBar from "@/components/Navbar/CharityNavBar.vue";
 
 const route = useRoute();
 
-const showNavbar = computed(() => {
-  return route.path !== "/login"
-      && route.path !== "/signup";
-});
+const showNavbar = computed(() =>
+  !route.path.startsWith("/login") && !route.path.startsWith("/signup")
+);
 
+const isBusinessRoute = computed(() =>
+  route.path.startsWith("/business-user")
+);
+
+const isCharityRoute = computed(() =>
+  route.path.startsWith("/charity-user")
+);
+
+const isGeneralUserRoute = computed(() =>
+  route.path.startsWith("/generaluser")
+);
 </script>

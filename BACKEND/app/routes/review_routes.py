@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.extensions import db
-from app.models import RatingReview
+from app.models import RatingReview, ReviewFlag
 
 
 review_bp = Blueprint("review_bp", __name__)
@@ -51,3 +51,18 @@ def get_reviews_for_organisation(organisation_id):
     ).all()
 
     return jsonify([review.to_dict() for review in reviews]), 200
+
+@review_bp.route("/<int:review_id>/flag", methods=["POST"])
+def flag_review(review_id):
+    data = request.get_json() or {}
+
+    flag = ReviewFlag(
+        review_id=review_id,
+        flagged_by_user_id=data.get("flagged_by_user_id"),
+        reason=data.get("reason", "")
+    )
+
+    db.session.add(flag)
+    db.session.commit()
+
+    return jsonify(message="Review flagged", flag=flag.to_dict()), 201

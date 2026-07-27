@@ -1,6 +1,6 @@
 <template>
 
-  <div class="dashboard" v-if="currentReport">
+  <div class="dashboard">
     <TrendScore
       :report="currentReport"
     />
@@ -11,13 +11,10 @@
     />
 
     <EngagementChart
-	  :report="currentReport"
-	  organisationType="charity"
-	/>
+      :report="currentReport"
+      organisationType="charity"
+    />
   </div>
-  <p v-else>
-    Loading dashboard...
-  </p>
 
 </template>
 
@@ -31,19 +28,35 @@ import PerformanceSummary from "@/components/AnalyticsDashboard/PerformanceSumma
 import EngagementChart from "@/components/AnalyticsDashboard/EngagementChart.vue"
 
 const reports = ref([])
-const currentReport = ref(null)
+const currentReport = ref({
+  total_views: 0,
+  total_saves: 0,
+  total_messages: 0,
+  total_reviews: 0,
+  total_volunteer_signups: 0,
 
-const organisationId = 15
+  profile_views: 0,
+  saves: 0,
+  messages: 0,
+  volunteer_signups: 0,
 
-// TODO: Replace hardcoded organisation ID with the logged-in user's
-// organisation after JWT authentication is implemented.
+  average_rating: 0,
+  bayesian_rating: 0,
+  engagement_score: 0,
+  trend_score: 0,
+  growth_rate: 0,
+
+  trend_status: "No Data"
+})
+
 onMounted(async () => {
   try {
     reports.value = await api.getMonthlyReport(organisationId)
-    currentReport.value = reports.value[reports.value.length - 1]
-    
-  }catch (error) {
-    console.error(error)
+    if (reports.value.length > 0) {
+      currentReport.value = reports.value[reports.value.length - 1]
+    }
+  } catch (error) {
+    console.error("Failed to load report:", error)
   }
 })
 

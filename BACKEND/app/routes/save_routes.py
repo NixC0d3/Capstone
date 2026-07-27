@@ -1,10 +1,39 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy import text
 from app.extensions import db
-
+from app.models import SavedOrganisation, Organisation
 
 save_bp = Blueprint("save_bp", __name__)
 
+@save_bp.route("", methods=["GET"])
+def get_saved():
+
+    user_id = request.args.get("user_id")
+
+    if not user_id:
+        return jsonify(error="user_id is required"), 400
+
+    saved = (
+        db.session.query(SavedOrganisation, Organisation)
+        .join(
+            Organisation,
+            SavedOrganisation.organisation_id == Organisation.organisation_id
+        )
+        .filter(
+            SavedOrganisation.user_id == user_id
+        )
+        .all()
+    )
+
+    return jsonify([
+        {
+            "saved_id": saved_org.saved_id,
+            "organisation_id": organisation.organisation_id,
+            "organisation_name": organisation.organisation_name,
+            "organisation_type": organisation.organisation_type
+        }
+        for saved_org, organisation in saved
+    ])
 
 @save_bp.route("", methods=["POST"])
 def save_organisation():

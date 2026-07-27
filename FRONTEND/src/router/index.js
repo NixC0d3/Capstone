@@ -9,7 +9,8 @@ import GeneralUserProfile from "@/views/general-user/GeneralUserProfile.vue";
 import GeneralUserCharity from "@/views/general-user/GeneralUserCharity.vue";
 
 import BusinessHome from "@/views/business-owner/BusinessHome.vue";
-
+import BusinessProfile from "@/views/business-owner/BusinessProfile.vue";
+import CharityProfile from "@/views/charity-owner/CharityProfile.vue";
 import CharityHome from "@/views/charity-owner/CharityHome.vue";
 
 import OrgView from "@/views/general-user/OrgView.vue";
@@ -64,6 +65,15 @@ const router = createRouter({
     {
       path: "/about",
       component: About
+    },
+    {
+      path: "/business-user/profile",
+      component: BusinessProfile
+    },
+
+    {
+      path: "/charity-user/profile",
+      component: CharityProfile
     }
 
     

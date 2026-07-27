@@ -16,17 +16,16 @@ class="card"
                 {{ organisation.organisation_name }}
             </h3>
 
-            <button
-            class="heart"
-            @click.stop="saveOrg"
-            >
-            ♡
-            </button>
+            <span class="heart">
+                {{ organisation.is_saved === true ? "♥" : "♡" }}
+            </span>
         </div>
 
 
-        <div class="category">
-            {{ displayCategories }}
+        <div class="tags">
+            <span>
+                {{ organisation.category_name }}
+            </span>
         </div>
 
         <div class="rating">
@@ -36,9 +35,8 @@ class="card"
         <p class="location">
             📍 
             {{
-                organisation.town && organisation.parish
-                ? `${organisation.town}, ${organisation.parish}`
-                : "Location unavailable"
+                organisation.address || organisation.town || organisation.parish
+                || "Location unavailable"
             }}
         </p>
 
@@ -99,17 +97,42 @@ h3{
 p{
     color:#666;
 }
-
 .description{
-    min-height:50px;
+    height:75px;
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:3;
+    -webkit-box-orient:vertical;
+    text-overflow:ellipsis;
 }
-
-button{
+.heart {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:42px;
+    height:42px;
     background:#8B5A3C;
     color:white;
-    border:none;
-    padding:10px 20px;
     border-radius:10px;
+    font-size:20px;
+}
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:10px;
+}
+.tags{
+    display:flex;
+    gap:8px;
+    margin-bottom:15px;
+}
+.tags span{
+    background:#EEE6DE;
+    color:#8B5A3C;
+    padding:5px 12px;
+    border-radius:20px;
+    font-size:12px;
 }
 
 </style>

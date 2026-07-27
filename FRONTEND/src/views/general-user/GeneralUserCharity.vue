@@ -34,7 +34,7 @@
 
             <CharityCard
                 v-for="charity in searchResults"
-                :key="charity.id"
+                :key="charity.organisation_id"
                 :charity="charity"
             />
 
@@ -74,7 +74,6 @@ import CharityCard from "@/components/CharityCard.vue";
 import { api } from "@/services/api";
 
 const charities = ref([]);
-
 const categories = ref([]);
 const locations = ref([]);
 
@@ -85,24 +84,52 @@ const selectedLocation = ref("");
 const searchResults = ref([]);
 const hasSearched = ref(false);
 
-function goBack() {
+async function addSavedStatus(orgs) {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user || !user.user_id) {
+        return orgs.map(org => ({
+            ...org,
+            is_saved: false
+        }));
+    }
+    try {
+        const saved = await api.getSavedOrganisations(user.user_id);
+        return orgs.map(org => ({
+            ...org,
+            is_saved: saved.some(
+                item => item.organisation_id === org.organisation_id
+            )
+        }));
+    } catch(error) {
+        console.error("Error loading saved organisations:", error);
+
+        return orgs.map(org => ({
+            ...org,
+            is_saved: false
+        }));
+    }
+}
+
+async function goBack() {
     hasSearched.value = false;
 
     searchTerm.value = "";
     selectedCategory.value = "";
     selectedLocation.value = "";
+
+    charities.value = await addSavedStatus(charities.value);
 }
 
-function searchCharities(){
+async function searchCharities(){
     hasSearched.value = true;
 
-    searchResults.value =
-    charities.value.filter(charity=>{
+    const results = charities.value.filter(charity=>{
 
-        const matchesName =
+        const matchesName = !searchTerm.value || 
         charity.organisation_name
         .toLowerCase()
-        .includes(filters.searchTerm.toLowerCase());
+        .includes(searchTerm.value.toLowerCase());
 
         const matchesCategory =
             !selectedCategory.value ||
@@ -118,15 +145,17 @@ function searchCharities(){
         && matchesCategory 
         && matchesLocation;
     });
+    searchResults.value = await addSavedStatus(results);
 }
 
 onMounted(async () => {
     try {
         const organisations = await api.getOrganisations();
-        charities.value = organisations.filter(
+        const charityData = organisations.filter(
             organisation =>
             organisation.organisation_type === "charity"
         );
+        charities.value = await addSavedStatus(charityData);     
         categories.value = await api.getCategories();
         locations.value = await api.getLocations();
     } catch(error){

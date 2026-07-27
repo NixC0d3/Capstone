@@ -8,9 +8,15 @@
         {{ charity.category_name}}
     </span>
 
-    <h2>
-        {{ charity.organisation_name }}
-    </h2>
+    <div class="header">
+        <h2>
+            {{ charity.organisation_name }}
+        </h2>
+
+        <span class="heart">
+            {{ charity.is_saved ? "♥" : "♡" }}
+        </span>
+    </div>
 
     <div class="rating">
         ⭐ {{ charity.rating || "No ratings yet" }}
@@ -135,5 +141,21 @@ button{
         width:auto;
     }
 }
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
 
+.heart{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:42px;
+    height:42px;
+    background:#8B5A3C;
+    color:white;
+    border-radius:10px;
+    font-size:20px;
+}
 </style>

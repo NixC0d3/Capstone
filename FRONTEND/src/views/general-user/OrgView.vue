@@ -28,7 +28,7 @@
           {{ organisation.organisation_type }}
          </span>
 
-        <span v-if="organisation.category">
+        <span v-if="organisation.category_name">
           {{ organisation.category_name }}
         </span>
 
@@ -39,30 +39,22 @@
       </h1>
 
       <div class="rating">
-        <span class="star">★</span>
+        <span class="star">⭐</span>
 
         <span v-if="reviewCount === 0">
           No ratings yet
         </span>
 
         <span v-else>
-          {{ averageRating.toFixed(1) }}/5 based on {{ reviewCount }}
-          {{ reviewCount === 1 ? "review" : "reviews" }}
+          {{ averageRating.toFixed(1) }}/5 ({{ reviewCount }})
         </span>
       </div>
 
       <div class="location">
         📍
         {{
-        organisation.address
-        ?
-        organisation.address
-        :
-        organisation.town && organisation.parish
-        ?
-        `${organisation.town}, ${organisation.parish}`
-        :
-        "Location unavailable"
+          organisation.address || organisation.town || organisation.parish
+          || "Location unavailable"
         }}
       </div>
 
@@ -88,7 +80,7 @@
   <div class="sidebar">
     <div class="top-actions">
       <button class="save-btn" @click="saveOrganisation">
-        ❤️ Save
+         {{ saved ? "♥ Saved" : "♡ Save" }}
       </button>
 
       <button 
@@ -99,13 +91,13 @@
       </button>
     </div>
       <!-- BUSINESS ONLY -->
-      <button
+      <a
         v-if="organisation.organisation_type === 'business'"
         class="contact-btn"
-        @click="openMessages"
+        :href="`tel:${organisation.phone}`"
       >
         Get in Touch
-      </button>
+      </a>
 
       <!-- CHARITY ONLY -->
       <button
@@ -124,6 +116,9 @@
           {{ organisation.phone || "No phone available" }}
         </p>
 
+        <h3>
+          Email
+        </h3>
         <p>
           {{ organisation.email || "No email available" }}
         </p>
@@ -164,6 +159,7 @@ const router = useRouter();
 const organisation = ref({});
 const reviews = ref([]);
 const loading = ref(true);
+const saved = ref(false);
 
 const reviewCount = computed(() => {
   return reviews.value.length;
@@ -183,15 +179,12 @@ const averageRating = computed(() => {
 
 onMounted(async()=>{
   try{
-    organisation.value =
-    await api.getOrganisation(
-    route.params.id
-  );
-  // this will come from reviews table
-  reviews.value = await api.getOrganisationReviews(route.params.id);
+    organisation.value = await api.getOrganisation(route.params.id);
   
-  await logProfileView();
-  
+    // this will come from reviews table
+    reviews.value = await api.getOrganisationReviews(route.params.id);
+    await checkSaved();
+    await logProfileView();
   }catch(error){
     console.error(error);
   }finally{
@@ -219,8 +212,6 @@ async function addReview(review) {
       rating: Number(review.rating),
       review_text: review.review_text
     });
-
-    alert("Review submitted successfully.");
 
     reviews.value = await api.getOrganisationReviews(
       organisation.value.organisation_id
@@ -262,6 +253,17 @@ async function logProfileView() {
   }
 }
 
+async function checkSaved() {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user || !user.user_id) {
+    return;
+  }
+  const savedOrganisations = await api.getSavedOrganisations(user.user_id);
+  saved.value = savedOrganisations.some(
+    item => item.organisation_id === organisation.value.organisation_id
+  );
+}
 
 
 async function saveOrganisation() {
@@ -272,17 +274,22 @@ async function saveOrganisation() {
       alert("You must be logged in to save an organisation.");
       return;
     }
-
-    await api.saveOrganisation({
-      user_id: user.user_id,
-      organisation_id: organisation.value.organisation_id
-    });
-
-    alert("Organisation saved.");
+    if (saved.value) {
+      await api.unsaveOrganisation({
+        user_id: user.user_id,
+        organisation_id: organisation.value.organisation_id
+      });
+      saved.value = false;
+    }else{
+      await api.saveOrganisation({
+        user_id: user.user_id,
+        organisation_id: organisation.value.organisation_id
+      });
+      saved.value = true;
+    }    
 
   } catch (error) {
     console.error("Error saving organisation:", error);
-    alert("Save failed. Check console/backend terminal.");
   }
 }
 
@@ -423,6 +430,11 @@ p{
   background:#8B5A3C;
   color:white;
   cursor:pointer;
+}
+.contact-btn {
+  display:block;
+  text-align:center;
+  text-decoration:none;
 }
 
 .save-btn:hover,

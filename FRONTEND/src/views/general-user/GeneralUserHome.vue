@@ -78,6 +78,36 @@ const selectedLocation = ref("");
 
 const hasSearched = ref(false);
 
+/*
+  ADD SAVED STATUS TO ORGANISATIONS
+*/
+async function addSavedStatus(orgs) {
+  const user = JSON.parse(localStorage.getItem("user"));
+  // If no user is logged in, everything is unsaved
+  if (!user || !user.user_id) {
+
+    return orgs.map(org => ({
+      ...org,
+      is_saved: false
+    }));
+  }  
+  try {
+
+    const savedOrganisations = await api.getSavedOrganisations(user.user_id);
+
+    return orgs.map(org => ({
+      ...org,
+      is_saved: savedOrganisations.some(
+        saved => saved.organisation_id === org.organisation_id
+    )}));
+  } catch (error) {
+    console.error("Error loading saved organisations:", error);
+    return orgs.map(org => ({
+      ...org,
+      is_saved: false
+    }));
+  }
+}
 
 /*
   LOAD RECOMMENDATIONS
@@ -97,7 +127,7 @@ async function loadRecommendations() {
 
     console.log("Recommendations from backend:", data);
 
-    recommendedOrganisations.value = data;
+    recommendedOrganisations.value = await addSavedStatus(data);
   } catch (error) {
     console.error("Error loading recommendations:", error);
   }

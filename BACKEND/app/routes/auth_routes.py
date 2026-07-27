@@ -218,3 +218,31 @@ def login():
         message="Login successful",
         user=user.to_dict()
     ), 200
+
+@auth_bp.route("/profile/<int:user_id>", methods=["GET"])
+def get_profile(user_id):
+    user = User.query.get_or_404(user_id)
+
+    preferences = (
+        db.session.query(Category.category_name)
+        .join(UserPreference,Category.category_id == UserPreference.category_id)
+        .filter(UserPreference.user_id == user_id).all()
+    )
+
+    skills = (UserSkill.query.filter_by(user_id=user_id).all())
+
+    return jsonify({
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "role_id": user.role_id,
+        "location_id": user.location_id,
+        "preferences": [
+            p.category_name
+            for p in preferences
+        ],
+        "skills": [
+            s.skill_name
+            for s in skills
+        ]
+    })
