@@ -14,6 +14,7 @@ import CharityProfile from "@/views/charity-owner/CharityProfile.vue";
 import CreateOrg from "@/views/business-charity/CreateOrg.vue";
 import EditOrg from "@/views/business-charity/EditOrg.vue";
 import CharityHome from "@/views/charity-owner/CharityHome.vue";
+import AdminHome from "@/views/admin/AdminHome.vue";
 
 import OrgView from "@/views/general-user/OrgView.vue";
 import Inbox from "@/views/Inbox.vue";
@@ -118,6 +119,10 @@ const router = createRouter({
         organisationType: "charity"
       }
     },
+    {
+      path: "/admin/home",
+      component: AdminHome
+    }
     
     {
       path: "/charity-user/volunteer-matches",
