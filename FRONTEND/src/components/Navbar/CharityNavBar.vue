@@ -12,7 +12,24 @@
         <router-link to="/charity-user/inbox">
             Inbox
         </router-link>
-        <router-link to="/charity-user/volunteer-matches">
+        <router-link
+          v-if="hasOrganisation"
+          to="/charity-user/edit-organisation"
+        >
+          My Charity
+        </router-link>
+
+        <router-link
+          v-else
+          to="/charity-user/create-organisation"
+        >
+          Create Charity
+        </router-link>
+
+        <router-link
+          v-if="hasOrganisation"
+          to="/charity-user/volunteer-matches"        
+        >
             Volunteer Allocation
         </router-link>
     </div>

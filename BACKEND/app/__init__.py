@@ -26,7 +26,7 @@ def create_app():
     from app.routes.message_routes import message_bp
     from app.routes.admin_routes import admin_bp
     from app.routes.recommendation_routes import recommendation_bp
-    from app.routes.report_routes import monthly_report_bp
+    from app.routes.report_routes import report_bp
     from app.routes.engagement_routes import engagement_bp
     from app.routes.save_routes import save_bp
 
@@ -37,7 +37,7 @@ def create_app():
     app.register_blueprint(message_bp, url_prefix="/api/messages")
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
     app.register_blueprint(recommendation_bp, url_prefix="/api/recommendations")
-    app.register_blueprint(monthly_report_bp, url_prefix="/api/reports")
+    app.register_blueprint(report_bp, url_prefix="/api/reports")    
     app.register_blueprint(engagement_bp, url_prefix="/api/engagement")
     app.register_blueprint(save_bp, url_prefix="/api/saves")
     

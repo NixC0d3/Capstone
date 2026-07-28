@@ -1,97 +1,90 @@
 from flask import Blueprint, jsonify
-import psycopg2
+from sqlalchemy import text
+from app.extensions import db
 
-monthly_report_bp = Blueprint("monthly_report", __name__)
-
-DB_NAME = "capstone"
-DB_USER = "postgres"
-DB_PASSWORD = "password"  # use your working PostgreSQL password
-DB_HOST = "localhost"
-DB_PORT = "5432"
+report_bp = Blueprint("report_bp", __name__)
 
 
-def get_connection():
-    return psycopg2.connect(
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        host=DB_HOST,
-        port=DB_PORT
-    )
+@report_bp.route("/business-dashboard/<int:user_id>", methods=["GET"])
+def get_business_dashboard_report(user_id):
+    # Find the business owned by the logged-in business user
+    organisation = db.session.execute(
+        text("""
+            SELECT
+                organisation_id,
+                organisation_name
+            FROM organisations
+            WHERE owner_user_id = :user_id
+              AND LOWER(organisation_type) = 'business'
+            LIMIT 1;
+        """),
+        {"user_id": user_id}
+    ).fetchone()
 
+    if not organisation:
+        return jsonify(error="No business found for this user"), 404
 
-def safe_float(value):
-    if value is None:
-        return 0
-    return float(value)
+    # Get the latest available report for that business
+    report = db.session.execute(
+        text("""
+            SELECT
+                report_id,
+                organisation_id,
+                report_month,
+                report_year,
+                total_views,
+                total_saves,
+                total_messages,
+                total_reviews,
+                average_rating,
+                bayesian_rating,
+                trend_score,
+                trend_status,
+                engagement_score,
+                growth_rate,
+                total_volunteer_signups,
+                generated_at
+            FROM monthly_business_reports
+            WHERE organisation_id = :organisation_id
+            ORDER BY report_year DESC, report_month DESC
+            LIMIT 1;
+        """),
+        {"organisation_id": organisation.organisation_id}
+    ).fetchone()
 
+    if not report:
+        return jsonify({
+            "organisation_id": organisation.organisation_id,
+            "organisation_name": organisation.organisation_name,
+            "trend_score": 0,
+            "trend_status": "Stable",
+            "growth_rate": 0,
+            "bayesian_rating": 0,
+            "average_rating": 0,
+            "total_views": 0,
+            "total_saves": 0,
+            "total_messages": 0,
+            "total_reviews": 0,
+            "engagement_score": 0,
+            "total_volunteer_signups": 0
+        }), 200
 
-@monthly_report_bp.route("/monthly-report/<int:organisation_id>", methods=["GET"])
-def get_monthly_report(organisation_id):
-    connection = get_connection()
-    cursor = connection.cursor()
-
-    cursor.execute(
-        """
-        SELECT
-            o.organisation_name,
-            m.organisation_id,
-            m.report_month,
-            m.report_year,
-            m.total_views,
-            m.total_saves,
-            m.total_messages,
-            m.total_reviews,
-            m.total_volunteer_signups,
-            m.average_rating,
-            m.bayesian_rating,
-            m.engagement_score,
-            m.trend_score,
-            m.growth_rate,
-            m.trend_status,
-            m.generated_at
-        FROM monthly_business_reports m
-        JOIN organisations o
-            ON m.organisation_id = o.organisation_id
-        WHERE m.organisation_id = %s
-        ORDER BY m.report_year, m.report_month;
-        """,
-        (organisation_id,)
-    )
-
-    rows = cursor.fetchall()
-    reports = []
-
-    for row in rows:
-        reports.append({
-            "organisation_name": row[0],
-            "organisation_id": row[1],
-            "report_month": row[2],
-            "report_year": row[3],
-            "month": f"{row[2]}/{row[3]}",
-
-            "total_views": row[4],
-            "total_saves": row[5],
-            "total_messages": row[6],
-            "total_reviews": row[7],
-            "total_volunteer_signups": row[8],
-
-            # Extra names for frontend components
-            "profile_views": row[4],
-            "saves": row[5],
-            "messages": row[6],
-            "volunteer_signups": row[8],
-
-            "average_rating": safe_float(row[9]),
-            "bayesian_rating": safe_float(row[10]),
-            "engagement_score": safe_float(row[11]),
-            "trend_score": safe_float(row[12]),
-            "growth_rate": round(safe_float(row[13]), 2),
-            "trend_status": row[14],
-            "generated_at": str(row[15])
-        })
-
-    cursor.close()
-    connection.close()
-
-    return jsonify(reports)
+    return jsonify({
+        "report_id": report.report_id,
+        "organisation_id": report.organisation_id,
+        "organisation_name": organisation.organisation_name,
+        "report_month": report.report_month,
+        "report_year": report.report_year,
+        "total_views": report.total_views,
+        "total_saves": report.total_saves,
+        "total_messages": report.total_messages,
+        "total_reviews": report.total_reviews,
+        "average_rating": float(report.average_rating or 0),
+        "bayesian_rating": float(report.bayesian_rating or 0),
+        "trend_score": float(report.trend_score or 0),
+        "trend_status": report.trend_status,
+        "engagement_score": float(report.engagement_score or 0),
+        "growth_rate": float(report.growth_rate or 0),
+        "total_volunteer_signups": report.total_volunteer_signups or 0,
+        "generated_at": report.generated_at.isoformat() if report.generated_at else None
+    }), 200

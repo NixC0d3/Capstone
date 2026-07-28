@@ -1,33 +1,21 @@
 <template>
+  <main class="business-home">
+    <TrendScore :report="currentReport" />
 
-  <div class="dashboard">
-    <TrendScore
-      :report="currentReport"
-    />
+    <PerformanceSummary :report="currentReport" />
 
-    <PerformanceSummary
-      :report="currentReport"
-      organisationType="business"
-    />
-
-    <EngagementChart
-	  :report="currentReport"
-	  organisationType="business"
-	/>
-  </div>
-
+    <EngagementChart :report="currentReport" />
+  </main>
 </template>
 
 <script setup>
+import { ref, onMounted } from "vue";
+import { api } from "@/services/api";
 
-import {ref,onMounted} from "vue"
-import {api} from "@/services/api"
+import TrendScore from "@/components/AnalyticsDashboard/TrendScore.vue";
+import PerformanceSummary from "@/components/AnalyticsDashboard/PerformanceSummary.vue";
+import EngagementChart from "@/components/AnalyticsDashboard/EngagementChart.vue";
 
-import TrendScore from "@/components/AnalyticsDashboard/TrendScore.vue"
-import PerformanceSummary from "@/components/AnalyticsDashboard/PerformanceSummary.vue"
-import EngagementChart from "@/components/AnalyticsDashboard/EngagementChart.vue"
-
-const reports = ref([])
 const currentReport = ref({
   total_views: 0,
   total_saves: 0,
@@ -45,27 +33,39 @@ const currentReport = ref({
   engagement_score: 0,
   trend_score: 0,
   growth_rate: 0,
-
-  trend_status: "No Data"
-})
+  trend_status: "Stable"
+});
 
 onMounted(async () => {
   try {
-    reports.value = await api.getMonthlyReport(organisationId)
-    if (reports.value.length > 0) {
-      currentReport.value = reports.value[reports.value.length - 1]
-    }
-  } catch (error) {
-    console.error("Failed to load report:", error)
-  }
-})
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const userId = user.user_id || user.id;
 
+    if (!userId) {
+      console.error("No logged-in business user found.");
+      return;
+    }
+
+    const data = await api.getBusinessDashboardReport(userId);
+
+    console.log("Business dashboard report:", data);
+
+    currentReport.value = {
+      ...currentReport.value,
+      ...data,
+      profile_views: data.total_views || 0,
+      saves: data.total_saves || 0,
+      messages: data.total_messages || 0,
+      volunteer_signups: data.total_volunteer_signups || 0
+    };
+  } catch (error) {
+    console.error("Failed to load business dashboard report:", error);
+  }
+});
 </script>
 
 <style scoped>
-.dashboard{
-    display:grid;
-    gap:30px;
-    padding:40px;
+.business-home {
+  padding: 32px;
 }
 </style>

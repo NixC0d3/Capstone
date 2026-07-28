@@ -27,6 +27,25 @@ export const api = {
   getOrganisation(id) {
     return request(`/organisations/${id}`);
   },
+  
+  createOrganisation(data) {
+    return request("/organisations", {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
+  },
+
+  updateOrganisation(id, data) {
+    return request(`/organisations/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data)
+    });
+  },
+
+  getOwnerOrganisation(userId) {
+    return request(`/organisations/owner/${userId}`);
+  },
+  
   getCategories() {
     return request("/organisations/categories");
   },
@@ -143,5 +162,9 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data)
     });
-  }  
+  },
+  
+  getBusinessDashboardReport(userId) {
+    return request(`/reports/business-dashboard/${userId}`);
+  },  
 };
