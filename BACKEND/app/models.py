@@ -141,6 +141,15 @@ class SavedOrganisation(db.Model, SerializerMixin):
     organisation_id = db.Column(db.Integer, db.ForeignKey("organisations.organisation_id"), nullable=False)
     saved_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    __table_args__ = (
+        db.Index(
+            "unique_user_saved_org",
+            "user_id",
+            "organisation_id",
+            unique=True
+        ),
+    )
+
 class EngagementLog(db.Model, SerializerMixin):
     __tablename__ = "engagement_logs"
 
@@ -166,6 +175,15 @@ class Conversation(db.Model, SerializerMixin):
     organisation_id = db.Column(db.Integer, db.ForeignKey("organisations.organisation_id"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_message_at = db.Column(db.DateTime, nullable=True)
+
+    __table_args__ = (
+        db.Index(
+            "unique_user_org_conversation",
+            "user_id",
+            "organisation_id",
+            unique=True
+        ),
+    )
 
 class Message(db.Model, SerializerMixin):
     __tablename__ = "messages"
@@ -246,6 +264,7 @@ class MonthlyBusinessReport(db.Model, SerializerMixin):
     total_saves = db.Column(db.Integer, default=0)
     total_messages = db.Column(db.Integer, default=0)
     total_reviews = db.Column(db.Integer, default=0)
+    total_volunteer_signups = db.Column(db.Integer, default=0)
     average_rating = db.Column(db.Float, nullable=True)
     bayesian_rating = db.Column(db.Float, nullable=True)
     engagement_score = db.Column(db.Float, nullable=True)

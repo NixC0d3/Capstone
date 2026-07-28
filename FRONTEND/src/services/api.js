@@ -153,18 +153,24 @@ export const api = {
       body: JSON.stringify(payload)
     });
   },
+  
   // Messages
+  getInbox(userId) {
+    return request(`/messages/inbox?user_id=${userId}`);
+  },
+
   getConversation(userId, organisationId) {
     return request(`/messages/conversation?user_id=${userId}&organisation_id=${organisationId}`);
   },
-  sendMessage(data) {
-    return request("/messages/send", {
-      method: "POST",
-      body: JSON.stringify(data)
-    });
+
+  getConversationById(conversationId, userId) {
+    return request(`/messages/conversation/${conversationId}?user_id=${userId}`);
   },
-  
-  getBusinessDashboardReport(userId) {
-    return request(`/reports/business-dashboard/${userId}`);
-  },  
+
+  sendMessage(data) {
+  return request("/messages/send", {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+}
 };

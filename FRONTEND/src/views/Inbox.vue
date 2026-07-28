@@ -1,10 +1,9 @@
 <template>
-
   <button 
-      class="back-btn"
-      @click="$router.back()"
+    class="back-btn"
+    @click="$router.back()"
   >
-      ← Back
+    ← Back
   </button>
 
   <div class="inbox-page">
@@ -12,26 +11,37 @@
     <!-- LEFT SIDE: Conversation List -->
     <div class="conversation-list">
       <div v-if="loading" class="empty-list">
-        Loading conversation...
+        Loading conversations...
       </div>
 
       <div
-        v-else-if="selectedConversation"
-        class="conversation-card active"
+        v-else-if="conversations.length === 0"
+        class="empty-list"
+      >
+        No conversations yet.
+      </div>
+
+      <div
+        v-else
+        v-for="conversation in conversations"
+        :key="conversation.conversation_id"
+        class="conversation-card"
+        :class="{
+          active:
+            selectedConversation &&
+            selectedConversation.conversation_id === conversation.conversation_id
+        }"
+        @click="selectConversation(conversation)"
       >
         <div class="avatar">
-          {{ selectedConversation.initials }}
+          {{ conversation.initials }}
         </div>
 
         <div>
-          <h3>{{ selectedConversation.participant }}</h3>
-          <p>{{ selectedConversation.lastMessage }}</p>
-          <small>{{ selectedConversation.time }}</small>
+          <h3>{{ conversation.participant }}</h3>
+          <p>{{ conversation.lastMessage }}</p>
+          <small>{{ conversation.time }}</small>
         </div>
-      </div>
-
-      <div v-else class="empty-list">
-        No conversation selected.
       </div>
     </div>
 
@@ -70,12 +80,12 @@
         <input
           v-model="newMessage"
           type="text"
-          placeholder="Write a reply..."
+          placeholder="Write a message..."
           @keyup.enter="sendReply"
         />
 
         <button @click="sendReply">
-          Send Reply
+          Send
         </button>
       </div>
 
@@ -97,10 +107,15 @@ import { api } from "@/services/api";
 const route = useRoute();
 
 const currentUser = ref(null);
-const organisation = ref(null);
+const conversations = ref([]);
 const selectedConversation = ref(null);
 const newMessage = ref("");
 const loading = ref(true);
+
+
+function getCurrentUserId() {
+  return currentUser.value?.user_id || currentUser.value?.id;
+}
 
 
 function getInitials(name) {
@@ -132,98 +147,152 @@ function formatTime(dateValue) {
 }
 
 
-function buildConversation(data) {
-  const org = data.organisation;
-  const messageRows = data.messages || [];
+function isOrganisationOwner() {
+  const roleId = Number(currentUser.value?.role_id);
 
-  const formattedMessages = messageRows.map(message => {
+  // 2 = Business Owner
+  // 3 = Charity Owner
+  return roleId === 2 || roleId === 3;
+}
+
+
+function formatConversationListItem(row) {
+  const participant = isOrganisationOwner()
+    ? row.general_user_name
+    : row.organisation_name;
+
+  return {
+    conversation_id: row.conversation_id,
+    organisation_id: row.organisation_id,
+    general_user_id: row.general_user_id,
+    participant: participant,
+    initials: getInitials(participant),
+    lastMessage: row.last_message || "No messages yet",
+    time: formatTime(row.last_message_time || row.last_message_at || row.created_at)
+  };
+}
+
+function buildSelectedConversation(data) {
+  const userId = getCurrentUserId();
+
+  const conversationInfo = data.conversation || {};
+  const organisationInfo = data.organisation || {};
+
+  const conversationId =
+    data.conversation_id ||
+    conversationInfo.conversation_id ||
+    null;
+
+  const organisationId =
+    organisationInfo.organisation_id ||
+    conversationInfo.organisation_id ||
+    null;
+
+  const participant = isOrganisationOwner()
+  ? conversationInfo.general_user_name
+  : conversationInfo.organisation_name ||
+    organisationInfo.organisation_name ||
+    "Conversation";
+
+  const messages = (data.messages || []).map(message => {
     return {
       id: message.message_id,
+      conversation_id: message.conversation_id,
       sender_user_id: message.sender_user_id,
       sender: message.sender_name,
-      mine: message.sender_user_id === currentUser.value.user_id,
+      mine: message.sender_user_id === userId,
       text: message.message_text,
       sent_at: message.sent_at
     };
   });
 
-  const lastMessage = formattedMessages.length
-    ? formattedMessages[formattedMessages.length - 1]
-    : null;
-
   selectedConversation.value = {
-    conversation_id: formattedMessages.length
-      ? formattedMessages[0].conversation_id
-      : null,
-
-    organisation_id: org.organisation_id,
-    participant: org.organisation_name,
-    initials: getInitials(org.organisation_name),
-    lastMessage: lastMessage ? lastMessage.text : "Start a conversation",
-    time: lastMessage ? formatTime(lastMessage.sent_at) : "",
-    messages: formattedMessages
+    conversation_id: conversationId,
+    organisation_id: organisationId,
+    participant: participant,
+    initials: getInitials(participant),
+    lastMessage: messages.length
+      ? messages[messages.length - 1].text
+      : "No messages yet",
+    time: messages.length
+      ? formatTime(messages[messages.length - 1].sent_at)
+      : "",
+    messages: messages
   };
 }
 
 
-async function loadConversation() {
+async function loadInbox() {
+  const userId = getCurrentUserId();
+
+  const data = await api.getInbox(userId);
+
+  conversations.value = data.map(row => formatConversationListItem(row));
+}
+
+
+async function loadConversationByOrganisation(organisationId) {
+  const userId = getCurrentUserId();
+
+  const data = await api.getConversation(userId, organisationId);
+
+  buildSelectedConversation(data);
+}
+
+
+async function selectConversation(conversation) {
   try {
-    loading.value = true;
+    const userId = getCurrentUserId();
 
-    currentUser.value = JSON.parse(localStorage.getItem("user"));
-
-    if (!currentUser.value || !currentUser.value.user_id) {
-      alert("You must be logged in to view messages.");
-      return;
-    }
-
-    const organisationId = route.query.organisation;
-
-    if (!organisationId) {
-      console.log("No organisation selected in URL.");
-      return;
-    }
-
-    const data = await api.getConversation(
-      currentUser.value.user_id,
-      organisationId
+    const data = await api.getConversationById(
+      conversation.conversation_id,
+      userId
     );
 
-    organisation.value = data.organisation;
-
-    buildConversation(data);
-
-    console.log("Conversation loaded:", data);
+    buildSelectedConversation(data);
 
   } catch (error) {
-    console.error("Error loading conversation:", error);
-    alert("Could not load conversation. Check browser console and backend terminal.");
-  } finally {
-    loading.value = false;
+    console.error("Error loading selected conversation:", error);
+    alert("Could not load this conversation.");
   }
 }
 
 
 async function sendReply() {
   try {
-    if (!newMessage.value.trim()) {
+    const messageText = newMessage.value.trim();
+
+    if (!messageText) {
       return;
     }
 
-    if (!currentUser.value || !organisation.value) {
-      alert("Conversation is not ready yet.");
+    if (!selectedConversation.value) {
+      alert("No conversation selected.");
       return;
     }
 
-    await api.sendMessage({
-      user_id: currentUser.value.user_id,
-      organisation_id: organisation.value.organisation_id,
-      message_text: newMessage.value
-    });
+    const payload = {
+      sender_user_id: getCurrentUserId(),
+      message_text: messageText
+    };
+
+    if (selectedConversation.value.conversation_id) {
+      payload.conversation_id = selectedConversation.value.conversation_id;
+    } else {
+      payload.organisation_id = selectedConversation.value.organisation_id;
+    }
+
+    const response = await api.sendMessage(payload);
 
     newMessage.value = "";
 
-    await loadConversation();
+    await loadInbox();
+
+    if (response.conversation_id) {
+      await selectConversation({
+        conversation_id: response.conversation_id
+      });
+    }
 
   } catch (error) {
     console.error("Error sending message:", error);
@@ -232,8 +301,41 @@ async function sendReply() {
 }
 
 
+async function loadPage() {
+  try {
+    loading.value = true;
+
+    currentUser.value = JSON.parse(localStorage.getItem("user") || "{}");
+
+    if (!getCurrentUserId()) {
+      alert("You must be logged in to view messages.");
+      return;
+    }
+
+    await loadInbox();
+
+    const organisationId = route.query.organisation;
+
+    if (organisationId) {
+      await loadConversationByOrganisation(organisationId);
+      return;
+    }
+
+    if (conversations.value.length > 0) {
+      await selectConversation(conversations.value[0]);
+    }
+
+  } catch (error) {
+    console.error("Error loading inbox:", error);
+    alert("Could not load inbox. Check browser console and backend terminal.");
+  } finally {
+    loading.value = false;
+  }
+}
+
+
 onMounted(async () => {
-  await loadConversation();
+  await loadPage();
 });
 </script>
 

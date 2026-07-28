@@ -10,8 +10,6 @@ import GeneralUserCharity from "@/views/general-user/GeneralUserCharity.vue";
 
 import BusinessHome from "@/views/business-owner/BusinessHome.vue";
 import BusinessProfile from "@/views/business-owner/BusinessProfile.vue";
-import CreateOrg from "@/views/business-charity/CreateOrg.vue";
-import EditOrg from "@/views/business-charity/EditOrg.vue";
 import CharityProfile from "@/views/charity-owner/CharityProfile.vue";
 import CreateOrg from "@/views/business-charity/CreateOrg.vue";
 import EditOrg from "@/views/business-charity/EditOrg.vue";
@@ -19,6 +17,7 @@ import CharityHome from "@/views/charity-owner/CharityHome.vue";
 
 import OrgView from "@/views/general-user/OrgView.vue";
 import Inbox from "@/views/Inbox.vue";
+
 const router = createRouter({
 
   history: createWebHistory(),
