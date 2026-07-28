@@ -27,7 +27,7 @@ export const api = {
   getOrganisation(id) {
     return request(`/organisations/${id}`);
   },
-  
+
   createOrganisation(data) {
     return request("/organisations", {
       method: "POST",

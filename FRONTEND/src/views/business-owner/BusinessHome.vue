@@ -38,34 +38,31 @@ const currentReport = ref({
 
 onMounted(async () => {
   try {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const userId = user.user_id || user.id;
 
-    if (!userId) {
-      console.error("No logged-in business user found.");
-      return;
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    // get the business owned by this user
+    const organisation = await api.getOwnerOrganisation(user.user_id);
+
+    // now we know the organisation id
+    const reports = await api.getMonthlyReport(organisation.organisation_id);
+
+    if (reports.length > 0) {
+      currentReport.value = reports[report.length - 1]
     }
-
-    const data = await api.getBusinessDashboardReport(userId);
-
-    console.log("Business dashboard report:", data);
-
-    currentReport.value = {
-      ...currentReport.value,
-      ...data,
-      profile_views: data.total_views || 0,
-      saves: data.total_saves || 0,
-      messages: data.total_messages || 0,
-      volunteer_signups: data.total_volunteer_signups || 0
-    };
   } catch (error) {
-    console.error("Failed to load business dashboard report:", error);
+    console.error("Failed to load report:", error)
   }
-});
+})
+
 </script>
 
 <style scoped>
-.business-home {
-  padding: 32px;
+.dashboard{
+    display:grid;
+    gap:30px;
+    padding:40px;
 }
 </style>
+
+   

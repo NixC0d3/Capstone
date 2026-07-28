@@ -30,8 +30,9 @@
           v-if="hasOrganisation"
           to="/charity-user/volunteer-matches"        
         >
-            Volunteer Allocation
+          Volunteer Allocation
         </router-link>
+
     </div>
 
     <div class="user-actions">
@@ -49,8 +50,10 @@
 
 <script setup>
 import { useRouter } from "vue-router";
-import { computed } from "vue";
+import { computed, ref, onMounted } from "vue";
+import { api } from "@/services/api";
 const router = useRouter();
+const hasOrganisation = ref(false);
 
 const user = JSON.parse(
     localStorage.getItem("user")
@@ -87,6 +90,15 @@ function goInbox(){
         router.push("/generaluser/inbox");
     }
 }
+
+onMounted(async () => {
+    try {
+        const organisation = await api.getOwnerOrganisation(user.user_id);
+        hasOrganisation.value = !!organisation;
+    } catch (error) {
+        hasOrganisation.value = false;
+    }
+});
 
 function logout(){
     // later this will clear authentication

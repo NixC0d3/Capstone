@@ -10,6 +10,8 @@ import GeneralUserCharity from "@/views/general-user/GeneralUserCharity.vue";
 
 import BusinessHome from "@/views/business-owner/BusinessHome.vue";
 import BusinessProfile from "@/views/business-owner/BusinessProfile.vue";
+import CreateOrg from "@/views/business-charity/CreateOrg.vue";
+import EditOrg from "@/views/business-charity/EditOrg.vue";
 import CharityProfile from "@/views/charity-owner/CharityProfile.vue";
 import CreateOrg from "@/views/business-charity/CreateOrg.vue";
 import EditOrg from "@/views/business-charity/EditOrg.vue";
@@ -124,7 +126,6 @@ const router = createRouter({
       component: () => import("@/views/charity-owner/VolunteerMatches.vue")
     }
 
-    
   ]
 });
 

@@ -12,6 +12,19 @@
         <router-link to="/business-user/inbox">
             Inbox
         </router-link>
+        <router-link
+            v-if="hasOrganisation"
+            to="/business-user/edit-organisation"
+        >
+            My Business
+        </router-link>
+
+        <router-link
+            v-else
+            to="/business-user/create-organisation"
+        >
+            Create Business
+        </router-link>
     </div>
 
     <div class="user-actions">
@@ -29,8 +42,10 @@
 
 <script setup>
 import { useRouter } from "vue-router";
-import { computed } from "vue";
+import { computed, ref, onMounted } from "vue";
+import { api } from "@/services/api";
 const router = useRouter();
+const hasOrganisation = ref(false);
 
 const user = JSON.parse(
     localStorage.getItem("user")
@@ -66,6 +81,15 @@ function goInbox(){
         router.push("/generaluser/inbox");
     }
 }
+
+onMounted(async () => {
+    try {
+        const organisation = await api.getOwnerOrganisation(user.user_id);
+        hasOrganisation.value = !!organisation;
+    } catch (error) {
+        hasOrganisation.value = false;
+    }
+});
 
 function logout(){
     // later this will clear authentication

@@ -125,10 +125,20 @@ def create_organisation():
 
     data = request.get_json() or {}
 
+    # Create location using selected parish + entered details
+    location = Location(
+        parish=data.get("parish"),
+        town=data.get("town"),
+        address=data.get("address")
+    )
+
+    db.session.add(location)
+    db.session.flush()
+
     organisation = Organisation(
         owner_user_id=data.get("owner_user_id"),
         category_id=data.get("category_id"),
-        location_id=data.get("location_id"),
+        location_id=location.location_id,
         organisation_name=data.get("organisation_name", ""),
         organisation_type=data.get("organisation_type", "business"),
         description=data.get("description"),
@@ -228,4 +238,68 @@ def get_organisation(organisation_id):
     """
 
     organisation = Organisation.query.get_or_404(organisation_id)
+    return jsonify(organisation_to_dict(organisation))
+
+@organisation_bp.route("/<int:organisation_id>", methods=["PUT"])
+def update_organisation(organisation_id):
+    """
+    Updates an existing organisation.
+    """
+    organisation = Organisation.query.get_or_404(organisation_id)
+    data = request.get_json() or {}
+
+    organisation.category_id = data.get("category_id", organisation.category_id)
+    organisation.organisation_name = data.get("organisation_name", organisation.organisation_name)
+    organisation.description = data.get("description", organisation.description)
+    organisation.phone = data.get("phone", organisation.phone)
+    organisation.email = data.get("email", organisation.email)
+    organisation.website_url = data.get("website_url", organisation.website_url)
+
+    # update location
+    if organisation.location:
+        organisation.location.parish = data.get("parish", organisation.location.parish)
+        organisation.location.town = data.get("town",organisation.location.town)
+        organisation.location.address = data.get("address",organisation.location.address)
+    else:
+
+        location = Location(
+            parish=data.get("parish"),
+            town=data.get("town"),
+            address=data.get("address")
+        )
+
+        db.session.add(location)
+        db.session.flush()
+
+        organisation.location_id = (location.location_id)
+
+    # Update extra categories
+    OrganisationCategory.query.filter_by(
+        organisation_id=organisation.organisation_id
+    ).delete()
+
+    for category_id in data.get("category_ids", []):
+        db.session.add(
+            OrganisationCategory(
+                organisation_id=organisation.organisation_id,
+                category_id=category_id
+            )
+        )
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Organisation updated",
+        "organisation": organisation_to_dict(organisation)
+    })
+
+@organisation_bp.route("/owner/<int:user_id>", methods=["GET"])
+def get_owner_organisation(user_id):
+    organisation = Organisation.query.filter_by(
+        owner_user_id=user_id
+    ).first()
+
+    if not organisation:
+        return jsonify(None), 404
+
     return jsonify(organisation_to_dict(organisation))
