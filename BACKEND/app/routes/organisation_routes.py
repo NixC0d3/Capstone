@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 from app.extensions import db
 from app.models import Organisation, Category, Location, OrganisationCategory
+from sqlalchemy import text
+from datetime import datetime, date
 
 
 organisation_bp = Blueprint("organisation_bp", __name__)
@@ -303,3 +305,233 @@ def get_owner_organisation(user_id):
         return jsonify(None), 404
 
     return jsonify(organisation_to_dict(organisation))
+ 
+ 
+#Trend score functions   
+def get_month_start(year, month):
+    return datetime(year, month, 1)
+
+
+def get_next_month_start(year, month):
+    if month == 12:
+        return datetime(year + 1, 1, 1)
+
+    return datetime(year, month + 1, 1)
+
+
+def get_previous_year_month(today):
+    if today.month == 1:
+        return today.year - 1, 12
+
+    return today.year, today.month - 1
+
+
+def get_engagement_counts(organisation_id, start_date, end_date):
+    """
+    Counts engagement activity from engagement_logs for one organisation
+    between start_date and end_date.
+    """
+
+    row = db.session.execute(
+        text("""
+            SELECT
+                COALESCE(SUM(CASE WHEN engagement_type = 'profile_view' THEN 1 ELSE 0 END), 0) AS profile_views,
+                COALESCE(SUM(CASE WHEN engagement_type = 'save' THEN 1 ELSE 0 END), 0) AS saves,
+                COALESCE(SUM(CASE WHEN engagement_type = 'message' THEN 1 ELSE 0 END), 0) AS messages,
+                COALESCE(SUM(CASE WHEN engagement_type = 'review' THEN 1 ELSE 0 END), 0) AS reviews,
+                COALESCE(SUM(CASE WHEN engagement_type = 'volunteer_signup' THEN 1 ELSE 0 END), 0) AS volunteer_signups
+            FROM engagement_logs
+            WHERE organisation_id = :organisation_id
+              AND created_at >= :start_date
+              AND created_at < :end_date;
+        """),
+        {
+            "organisation_id": organisation_id,
+            "start_date": start_date,
+            "end_date": end_date
+        }
+    ).fetchone()
+
+    return {
+        "profile_views": int(row.profile_views or 0),
+        "saves": int(row.saves or 0),
+        "messages": int(row.messages or 0),
+        "reviews": int(row.reviews or 0),
+        "volunteer_signups": int(row.volunteer_signups or 0)
+    }
+
+
+def calculate_weighted_engagement_score(counts):
+    """
+    Weighted engagement formula.
+    Higher-value actions receive more points.
+    """
+
+    return (
+        counts.get("profile_views", 0) * 1
+        + counts.get("saves", 0) * 3
+        + counts.get("messages", 0) * 4
+        + counts.get("reviews", 0) * 5
+        + counts.get("volunteer_signups", 0) * 5
+    )
+
+
+def calculate_growth_rate(previous_score, current_score):
+    if previous_score == 0 and current_score == 0:
+        return 0.0
+
+    if previous_score == 0 and current_score > 0:
+        return 100.0
+
+    return round(((current_score - previous_score) / previous_score) * 100, 2)
+
+
+def calculate_trend_label(growth_rate):
+    if growth_rate > 10:
+        return "Improving"
+
+    if growth_rate < -10:
+        return "Declining"
+
+    return "Stable"
+
+
+def calculate_trend_score(previous_score, current_score, growth_rate):
+    """
+    Converts the comparison into a score out of 100.
+
+    If there is no activity at all, score stays 0.
+    If current activity improves, score goes up.
+    If current activity drops, score goes down.
+    """
+
+    if previous_score == 0 and current_score == 0:
+        return 0
+
+    if previous_score == 0 and current_score > 0:
+        return 100
+
+    score = 50 + (growth_rate / 2)
+    score = max(0, min(100, score))
+
+    return round(score)
+
+
+def calculate_bayesian_rating(organisation_id):
+    """
+    Calculates Bayesian rating so that organisations with few reviews
+    are not unfairly ranked too high or too low.
+    """
+
+    global_row = db.session.execute(
+        text("""
+            SELECT COALESCE(AVG(rating), 0) AS global_average
+            FROM ratings_reviews
+            WHERE COALESCE(is_hidden, FALSE) = FALSE;
+        """)
+    ).fetchone()
+
+    org_row = db.session.execute(
+        text("""
+            SELECT
+                COUNT(*) AS review_count,
+                COALESCE(AVG(rating), 0) AS average_rating
+            FROM ratings_reviews
+            WHERE organisation_id = :organisation_id
+              AND COALESCE(is_hidden, FALSE) = FALSE;
+        """),
+        {"organisation_id": organisation_id}
+    ).fetchone()
+
+    global_average = float(global_row.global_average or 0)
+    review_count = int(org_row.review_count or 0)
+    organisation_average = float(org_row.average_rating or 0)
+
+    minimum_reviews = 5
+
+    if review_count == 0:
+        return round(global_average, 1), 0
+
+    bayesian_rating = (
+        (review_count / (review_count + minimum_reviews)) * organisation_average
+        + (minimum_reviews / (review_count + minimum_reviews)) * global_average
+    )
+
+    return round(bayesian_rating, 1), review_count
+
+
+@organisation_bp.route("/<int:organisation_id>/dashboard-report", methods=["GET"])
+def get_dashboard_report(organisation_id):
+    """
+    Generates the dashboard report dynamically.
+
+    It compares previous-month engagement with current-month engagement.
+    Every time the user clicks Generate Report, this recalculates from
+    engagement_logs, so the score is not hardcoded.
+    """
+
+    organisation = Organisation.query.get_or_404(organisation_id)
+
+    today = date.today()
+
+    current_year = today.year
+    current_month = today.month
+
+    previous_year, previous_month = get_previous_year_month(today)
+
+    current_start = get_month_start(current_year, current_month)
+    current_end = get_next_month_start(current_year, current_month)
+
+    previous_start = get_month_start(previous_year, previous_month)
+    previous_end = get_next_month_start(previous_year, previous_month)
+
+    previous_counts = get_engagement_counts(
+        organisation_id,
+        previous_start,
+        previous_end
+    )
+
+    current_counts = get_engagement_counts(
+        organisation_id,
+        current_start,
+        current_end
+    )
+
+    previous_score = calculate_weighted_engagement_score(previous_counts)
+    current_score = calculate_weighted_engagement_score(current_counts)
+
+    growth_rate = calculate_growth_rate(previous_score, current_score)
+    trend_label = calculate_trend_label(growth_rate)
+    trend_score = calculate_trend_score(
+        previous_score,
+        current_score,
+        growth_rate
+    )
+
+    bayesian_rating, total_reviews = calculate_bayesian_rating(organisation_id)
+
+    previous_month_label = previous_start.strftime("%B")
+    current_month_label = current_start.strftime("%B")
+
+    return jsonify({
+        "organisation_id": organisation.organisation_id,
+        "organisation_name": organisation.organisation_name,
+        "organisation_type": organisation.organisation_type,
+
+        "previous_month_label": previous_month_label,
+        "current_month_label": current_month_label,
+
+        "previous_month": previous_counts,
+        "current_month": current_counts,
+
+        "previous_score": previous_score,
+        "current_score": current_score,
+
+        "trend_score": trend_score,
+        "growth_rate": growth_rate,
+        "trend_label": trend_label,
+        "trend_status": trend_label,
+
+        "bayesian_rating": bayesian_rating,
+        "total_reviews": total_reviews
+    }), 200

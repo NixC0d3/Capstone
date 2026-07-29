@@ -1,6 +1,9 @@
 <template>
 
-<div class="charity-card">
+<div
+  class="charity-card"
+  @click="openOrganisation"
+>
     <span 
     v-if="charity.organisation_type === 'charity'"
     class="category"
@@ -56,6 +59,8 @@
 <script setup>
 
 import { useRouter } from "vue-router";
+import { api } from "@/services/api";
+
 const router = useRouter();
 
 const props = defineProps({
@@ -68,6 +73,25 @@ const props = defineProps({
 
 function learnMore(){
     router.push(`/organisation/${props.charity.organisation_id}`);
+}
+
+async function openOrganisation() {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const userId = user.user_id || user.id;
+
+    if (userId && props.charity?.organisation_id) {
+      await api.logEngagement({
+        organisation_id: props.charity.organisation_id,
+        user_id: userId,
+        engagement_type: "profile_view"
+      });
+    }
+  } catch (error) {
+    console.error("Failed to log profile view:", error);
+  }
+
+  router.push(`/generaluser/organisation/${props.charity.organisation_id}`);
 }
 
 </script>

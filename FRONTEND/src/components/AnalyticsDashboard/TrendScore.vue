@@ -1,109 +1,164 @@
 <template>
   <div class="trend-card">
-
-    <h2>{{ report?.month }}</h2>
-
-    <div class="trend-row">
-
-      <div class="score">
+    <div class="trend-left">
+      <template v-if="generated">
         <span class="label">Trend Score:</span>
         <span class="value">{{ Math.round(report?.trend_score || 0) }}/100</span>
-      </div>
+      </template>
 
+      <template v-else>
+        <span class="label">Current Month:</span>
+        <span class="value small-value">{{ report?.current_month_label || "Current Month" }}</span>
+      </template>
+    </div>
+
+    <div class="trend-right">
       <div
+        v-if="generated"
         class="status"
-        :class="report.trend_status?.toLowerCase()"
+        :class="trendStatus.toLowerCase()"
       >
-        <span v-if="report.trend_status === 'Improving'">
-          ▲ Improving (+{{ report.growth_rate.toFixed(1) }}%)
+        <span v-if="trendStatus === 'Improving'">
+          ↗ Improving (+{{ growthRate }}%)
         </span>
 
-        <span v-else-if="report.trend_status === 'Declining'">
-          ▼ Declining ({{ report.growth_rate.toFixed(1) }}%)
+        <span v-else-if="trendStatus === 'Declining'">
+          ↘ Declining ({{ growthRate }}%)
         </span>
 
         <span v-else>
-          ➜ Stable ({{ report.growth_rate.toFixed(1) }}%)
+          → Stable ({{ growthRate }}%)
         </span>
       </div>
+
+      <div v-else class="helper-text">
+        Generate report to compare with previous month
+      </div>
+
+      <button
+        class="generate-btn"
+        @click="$emit('generate-report')"
+        :disabled="loading"
+      >
+        {{ loading ? "Generating..." : generated ? "Refresh Report" : "Generate Report" }}
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
+import { computed } from "vue";
 
-defineProps({
-  report:{
-    type:Object,
-    required:false,
-    default:null
+const props = defineProps({
+  report: {
+    type: Object,
+    required: false,
+    default: null
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  },
+  generated: {
+    type: Boolean,
+    default: false
   }
-})
+});
 
+defineEmits(["generate-report"]);
+
+const trendStatus = computed(() => {
+  return props.report?.trend_label || props.report?.trend_status || "Stable";
+});
+
+const growthRate = computed(() => {
+  const value = props.report?.growth_rate || 0;
+  return Number(value).toFixed(1);
+});
 </script>
 
 <style scoped>
-
-.trend-card{
-  background:white;
-  border-radius:18px;
-  padding:30px;
-  box-shadow:0 10px 25px rgba(0,0,0,.08);
+.trend-card {
+  background: white;
+  border-radius: 18px;
+  padding: 30px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 25px;
 }
 
-h2{
-  margin:0;
-  color:#2C2C2C;
+.trend-left {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
 }
 
-.trend-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:20px;
+.label {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #2C2C2C;
 }
 
-.score{
-  display:flex;
-  align-items:baseline;
-  gap:10px;
+.value {
+  font-size: 2.6rem;
+  font-weight: bold;
+  color: #8B5A3C;
 }
 
-.label{
-  font-size:1.3rem;
-  font-weight:600;
-  color:#2C2C2C;
+.small-value {
+  font-size: 2.2rem;
 }
 
-.value{
-  font-size:2.4rem;
-  font-weight:bold;
-  color:#8B5A3C;
+.trend-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
 }
 
-.status{
-  font-size:1.2rem;
-  font-weight:600;
+.status {
+  font-size: 1.2rem;
+  font-weight: 700;
 }
 
-.improving{
-  color:#2E8B57;
+.improving {
+  color: #2E8B57;
 }
 
-.declining{
-  color:#C0392B;
+.declining {
+  color: #C0392B;
 }
 
-.stable{
-  color:#666;
+.stable {
+  color: #666;
 }
 
-@media (max-width:700px){
-  .trend-row{
-    flex-direction:column;
-    align-items:flex-start;
+.helper-text {
+  color: #666;
+  font-weight: 600;
+}
+
+.generate-btn {
+  border: none;
+  background: #8B5A3C;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.generate-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 700px) {
+  .trend-card,
+  .trend-right {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
-
 </style>

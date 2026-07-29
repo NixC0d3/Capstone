@@ -245,28 +245,27 @@ async function addReview(review) {
 
 async function logProfileView() {
   try {
-    const user = JSON.parse(localStorage.getItem("user"));
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const userId = user.user_id || user.id;
 
-    if (!user || !user.user_id || !organisation.value) {
+    if (!userId || !organisation.value) {
+      console.log("Profile view not logged: missing user or organisation");
       return;
     }
 
-    // Prevent repeated logs when refreshing the same page too much
-    const viewKey = `viewed_org_${organisation.value.organisation_id}_user_${user.user_id}`;
-
-    if (sessionStorage.getItem(viewKey)) {
-      return;
-    }
+    console.log("Logging profile view for:", {
+      organisation_id: organisation.value.organisation_id,
+      user_id: userId
+    });
 
     await api.logEngagement({
       organisation_id: organisation.value.organisation_id,
-      user_id: user.user_id,
+      user_id: userId,
       engagement_type: "profile_view"
     });
 
-    sessionStorage.setItem(viewKey, "true");
+    console.log("Profile view logged successfully");
 
-    console.log("Profile view logged");
   } catch (error) {
     console.error("Error logging profile view:", error);
   }

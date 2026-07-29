@@ -19,11 +19,13 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  
   // Organisations
   getOrganisations(params = {}) {
   const query = new URLSearchParams(params).toString();
   return request(`/organisations${query ? `?${query}` : ""}`);
   },
+  
   getOrganisation(id) {
     return request(`/organisations/${id}`);
   },
@@ -52,6 +54,7 @@ export const api = {
   getLocations(){
     return request("/organisations/locations");
   },
+  
   // Registration
   registerUser(payload){
     return request("/auth/register", {
@@ -129,28 +132,29 @@ export const api = {
   },
 
   // Reports
-  getMonthlyReport(id){
+  getMonthlyReport(id) {
     return request(`/reports/monthly-report/${id}`);
   },
+
+  getOrganisationDashboardReport(organisationId) {
+    return request(`/organisations/${organisationId}/dashboard-report`);
+  },
+
   calculateTrendScore(payload) {
     return request("/reports/trend-score", {
       method: "POST",
       body: JSON.stringify(payload)
     });
   },
+
   getEngagementWeights() {
     return request("/admin/engagement-weights");
   },
+  
   logEngagement(data) {
     return request("/engagement/log", {
       method: "POST",
       body: JSON.stringify(data)
-    });
-  },
-  updateEngagementWeights(payload) {
-    return request("/admin/engagement-weights", {
-      method: "PUT",
-      body: JSON.stringify(payload)
     });
   },
   
@@ -168,9 +172,9 @@ export const api = {
   },
 
   sendMessage(data) {
-  return request("/messages/send", {
-    method: "POST",
-    body: JSON.stringify(data)
-  });
-}
+    return request("/messages/send", {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
+  }
 };

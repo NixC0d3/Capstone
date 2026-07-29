@@ -1,185 +1,78 @@
 <template>
-
-<div class="chart-card">
-
-    <h3>Engagement Breakdown</h3>
-
-    <div class="bars">
-
-        <div class="bar-item">
-
-            <span>
-                Profile Views
-            </span>
-
-            <div class="bar">
-                <div
-                class="fill"
-                :style="{width: calculateWidth(report.profile_views) }"
-                ></div>
-            </div>
-
-            <strong>
-                {{ report.profile_views }}
-            </strong>
-
-        </div>
-
-        <div class="bar-item">
-
-            <span>
-                Saves
-            </span>
-
-            <div class="bar">
-                <div
-                class="fill"
-                :style="{width: calculateWidth(report.saves) }"
-                ></div>
-            </div>
-
-            <strong>
-                {{ report.saves }}
-            </strong>
-
-        </div>
-
-        <div class="bar-item">
-
-            <span>
-                Messages
-            </span>
-
-            <div class="bar">
-                <div
-                class="fill"
-                :style="{width: calculateWidth(report.messages) }"
-                ></div>
-            </div>
-
-            <strong>
-                {{ report.messages }}
-            </strong>
-        </div>
-
-        <div class="bar-item">
-            <span>
-                Reviews
-            </span>
-
-            <div class="bar">
-                <div
-                class="fill"
-                :style="{width: calculateWidth(report.total_reviews) }"
-                ></div>
-            </div>
-
-            <strong>
-                {{ report.total_reviews }}
-            </strong>
-
-        </div>
-
-        <!-- Charity only -->
-        <div 
-        v-if="organisationType === 'charity'"
-        class="bar-item"
-        >
-            <span>
-                Volunteer Sign-ups
-            </span>
-
-            <div class="bar">
-                <div
-                class="fill"
-                :style="{width: calculateWidth(report.volunteer_signups) }"
-                ></div>
-            </div>
-
-            <strong>
-                {{ report.volunteer_signups }}
-            </strong>
-        </div>
-
+  <div class="engagement-row">
+    <div class="bar-track">
+      <div
+        class="bar-fill"
+        :class="barClass"
+        :style="{ width: fillWidth + '%' }"
+      ></div>
     </div>
-</div>
-
+    <div class="value">{{ value }}</div>
+  </div>
 </template>
 
-
 <script setup>
+import { computed } from "vue";
 
 const props = defineProps({
-    report:{
-        type:Object,
-        required:true
-    },
-    organisationType:{
-        type:String,
-        required:true
-    }
+  value: {
+    type: Number,
+    default: 0
+  },
+  maxValue: {
+    type: Number,
+    default: 10
+  },
+  barClass: {
+    type: String,
+    default: "current-bar"
+  }
 });
 
-function calculateWidth(value){
-    const max = Math.max(
-        props.report.profile_views,
-        props.report.saves,
-        props.report.messages,
-        props.report.total_reviews,
-        props.report.volunteer_signups || 0
-    );
-    if(max === 0){
-        return "0%";
-    }
-    return `${(value / max) * 100}%`;
-}
+const safeMax = computed(() => {
+  return Math.max(Number(props.maxValue) || 0, 10);
+});
 
+const fillWidth = computed(() => {
+  const v = Number(props.value) || 0;
+  if (v <= 0) return 0;
+  return Math.min((v / safeMax.value) * 100, 100);
+});
 </script>
 
-
 <style scoped>
-
-.chart-card{
-    margin-top:30px;
-    background:white;
-    padding:30px;
-    border-radius:18px;
-    box-shadow:0 10px 25px rgba(0,0,0,.08);
+.engagement-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-h3{
-    margin-bottom:25px;
+.bar-track {
+  flex: 1;
+  height: 12px;
+  background: #ece9e5;
+  border-radius: 999px;
+  overflow: hidden;
 }
 
-.bar-item{
-    display:grid;
-    grid-template-columns:150px 1fr 60px;
-    align-items:center;
-    gap:15px;
-    margin-bottom:20px;
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
 }
 
-.bar{
-    height:12px;
-    background:#eee;
-    border-radius:10px;
-    overflow:hidden;
+.current-bar {
+  background: #9c623b;
 }
 
-.fill{
-    height:100%;
-    background:#8B5A3C;
-    border-radius:10px;
+.previous-bar {
+  background: #b8b1a8;
 }
 
-strong{
-    text-align:right;
+.value {
+  min-width: 28px;
+  text-align: right;
+  font-weight: 700;
+  color: #222;
 }
-
-@media(max-width:700px){
-    .bar-item{
-        grid-template-columns:1fr;
-    }
-}
-
 </style>
