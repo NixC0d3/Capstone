@@ -11,6 +11,21 @@
     </div>
 
     <div class="form-group">
+      <label>Owner First Name</label>
+
+      <input
+      v-model="form.owner_first_name"
+      />
+
+    </div>
+
+    <div class="form-group">
+      <label>Owner Last Name</label>
+      <input
+        v-model="form.owner_last_name"
+      />
+    </div>
+    <div class="form-group">
       <label>Description</label>
       <textarea
         v-model="form.description"
@@ -127,7 +142,9 @@ const form = reactive({
   address: "",
   phone: "",
   email: "",
-  website_url: ""
+  website_url: "",
+  owner_first_name:"",
+  owner_last_name:""
 });
 
 watch(

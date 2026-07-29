@@ -11,6 +11,10 @@
     v-else-if="showNavbar && isGeneralUserRoute"
   />
 
+  <AdminNavBar
+    v-else-if="showNavbar && isAdminRoute"
+  />
+
   <router-view />
 </template>
 
@@ -22,6 +26,7 @@ import { useRoute } from "vue-router";
 import GeneralUserNavBar from "@/components/Navbar/GeneralUserNavBar.vue";
 import BusinessNavBar from "@/components/Navbar/BusinessNavBar.vue";
 import CharityNavBar from "@/components/Navbar/CharityNavBar.vue";
+import AdminNavBar from "@/components/Navbar/AdminNavBar.vue";
 
 const route = useRoute();
 
@@ -39,5 +44,9 @@ const isCharityRoute = computed(() =>
 
 const isGeneralUserRoute = computed(() =>
   route.path.startsWith("/generaluser")
+);
+
+const isAdminRoute = computed(() =>
+  route.path.startsWith("/admin")
 );
 </script>

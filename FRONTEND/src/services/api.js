@@ -176,5 +176,35 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data)
     });
-  }
+  }, 
+   getBusinessDashboardReport(userId) {
+    return request(`/reports/business-dashboard/${userId}`);
+  },  
+  // Admin
+  getUsers(status = "all"){
+    return request(`/admin/users?status=${status}`);
+  },
+  getEngagementWeights(){
+    return request("/admin/engagement-weights");
+  },
+  updateEngagementWeights(payload) {
+    return request("/admin/engagement-weights", {
+      method: "PUT",
+      body: JSON.stringify(payload)
+    });
+  },
+  getUserDetails(id){
+    return request(`/admin/users/${id}`);
+  },
+  reviewUser(id,data){
+      return request(`/admin/users/${id}/review`,{
+          method:"POST",
+          body:JSON.stringify(data)
+      });
+  },
+  // Admin organisations
+  getAdminOrganisations(){
+      return request("/admin/organisations");
+  },
+  
 };

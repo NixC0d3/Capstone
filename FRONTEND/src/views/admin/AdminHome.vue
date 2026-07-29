@@ -5,9 +5,9 @@
 
     <div class="cards">
         <div class="card">
-            <h2>Users</h2>
+            <h2>General Users</h2>
             <p>{{ usersCount }}</p>
-            <button>
+            <button @click="router.push('/admin/users')">
                 Manage Users
             </button>
         </div>
@@ -40,6 +40,9 @@
 
 import {ref,onMounted} from "vue";
 import {api} from "@/services/api";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const usersCount = ref(0);
 const organisationCount = ref(0);
