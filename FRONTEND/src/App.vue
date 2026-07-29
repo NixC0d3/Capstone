@@ -43,7 +43,8 @@ const isCharityRoute = computed(() =>
 );
 
 const isGeneralUserRoute = computed(() =>
-  route.path.startsWith("/generaluser")
+  route.path.startsWith("/generaluser") ||
+  route.path.startsWith("/about")
 );
 
 const isAdminRoute = computed(() =>

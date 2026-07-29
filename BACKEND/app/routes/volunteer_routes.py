@@ -474,3 +474,59 @@ def allocate_volunteer(volunteer_need_id):
         "user_id": user_id,
         "match_score": match_score
     }), 201
+
+@volunteer_allocation_bp.route("/opportunities", methods=["GET"])
+def volunteer_opportunities():
+
+    result = db.session.execute(
+        text("""
+        SELECT
+            vn.volunteer_need_id,
+            vn.title,
+            vn.description,
+            vn.needed_date,
+            vn.urgency_level,
+            o.organisation_name
+        FROM volunteer_needs vn
+        JOIN organisations o
+        ON o.organisation_id = vn.organisation_id
+        WHERE vn.status='open';
+        """)
+    )
+
+    return jsonify([
+        dict(row._mapping)
+        for row in result
+    ])
+
+@volunteer_allocation_bp.route("/signup", methods=["POST"])
+def signup_volunteer():
+
+    data=request.get_json()
+
+    db.session.execute(
+        text("""
+        INSERT INTO volunteer_signups
+        (
+        volunteer_need_id,
+        user_id,
+        status
+        )
+        VALUES
+        (
+        :need,
+        :user,
+        'pending'
+        )
+        """),
+        {
+        "need":data["volunteer_need_id"],
+        "user":data["user_id"]
+        }
+    )
+
+    db.session.commit()
+
+    return jsonify(
+        message="Signup successful"
+    )

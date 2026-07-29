@@ -2,48 +2,65 @@
   <main class="page">
     <h1>Volunteer Allocation</h1>
     
-    <section class="form-card">
-	  <h2>Create Volunteer Need</h2>
+    <button 
+        class="create-btn"
+        @click="showCreateForm = true"
+    >
+        + Create Volunteer Need
+    </button>
+      <div
+          v-if="showCreateForm"
+          class="modal-overlay"
+      >
 
-	  <form @submit.prevent="createNeed">
-		<label>Title</label>
-		<input v-model="newNeed.title" type="text" required />
+        <section class="form-card modal">
+          <button
+              class="close-btn"
+              @click="showCreateForm = false"
+          >
+              X
+          </button>
+	        <h2>Create Volunteer Need</h2>
 
-		<label>Description</label>
-		<textarea v-model="newNeed.description"></textarea>
+          <form @submit.prevent="createNeed">
+            <label>Title</label>
+            <input v-model="newNeed.title" type="text" required />
 
-		<label>Urgency</label>
-		<select v-model="newNeed.urgency_level">
-		  <option value="low">Low</option>
-		  <option value="medium">Medium</option>
-		  <option value="high">High</option>
-		</select>
+            <label>Description</label>
+            <textarea v-model="newNeed.description"></textarea>
 
-		<label>Needed Date</label>
-		<input v-model="newNeed.needed_date" type="date" />
+            <label>Urgency</label>
+            <select v-model="newNeed.urgency_level">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
 
-		<label>Start Time</label>
-		<input v-model="newNeed.start_time" type="time" />
+            <label>Needed Date</label>
+            <input v-model="newNeed.needed_date" type="date" />
 
-		<label>End Time</label>
-		<input v-model="newNeed.end_time" type="time" />
+            <label>Start Time</label>
+            <input v-model="newNeed.start_time" type="time" />
 
-		<label>Volunteers Needed</label>
-		<input v-model.number="newNeed.volunteers_needed" type="number" min="1" />
+            <label>End Time</label>
+            <input v-model="newNeed.end_time" type="time" />
 
-		<label>Required Skills</label>
-		<input
-		  v-model="skillsText"
-		  type="text"
-		  placeholder="Example: First Aid, Construction, Driving"
-		/>
+            <label>Volunteers Needed</label>
+            <input v-model.number="newNeed.volunteers_needed" type="number" min="1" />
 
-		<button type="submit">
-		  Create Volunteer Need
-		</button>
-	  </form>
-	</section>
+            <label>Required Skills</label>
+            <input
+              v-model="skillsText"
+              type="text"
+              placeholder="Example: First Aid, Construction, Driving"
+            />
 
+            <button type="submit">
+              Create Volunteer Need
+            </button>
+          </form>
+	      </section>
+      </div>
     <section class="need-list">
       <h2>Volunteer Needs</h2>
 
@@ -166,6 +183,7 @@ const selectedNeedId = ref(null);
 
 const loadingNeeds = ref(false);
 const loadingMatches = ref(false);
+const showCreateForm = ref(false);
 
 const newNeed = ref({
   title: "",
@@ -221,6 +239,7 @@ async function createNeed() {
     skillsText.value = "";
 
     await loadVolunteerNeeds();
+    showCreateForm.value = false;
   } catch (error) {
     console.error("Error creating volunteer need:", error);
     alert("Volunteer need was not created.");
@@ -374,5 +393,51 @@ select {
 
 textarea {
   min-height: 90px;
+}
+.create-btn{
+    background:#965f3f;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:10px;
+    cursor:pointer;
+    margin-bottom:25px;
+    font-size:16px;
+}
+
+.modal-overlay{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,.45);
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    z-index:1000;
+}
+
+.modal{
+    width:500px;
+    max-height:90vh;
+    overflow-y:auto;
+    position:relative;
+}
+
+.close-btn{
+    position:absolute;
+    right:15px;
+    top:15px;
+
+    background:#eee;
+    color:#333;
+
+    border:none;
+    padding:6px 10px;
+    border-radius:50%;
+    cursor:pointer;
 }
 </style>

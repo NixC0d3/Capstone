@@ -34,7 +34,7 @@
             :class="{ active: currentTab === 'volunteer' }"
             @click="currentTab = 'volunteer'"
         >
-            Volunteer Allocations
+            Volunteer Opportunities
         </button>
 
         <button
@@ -48,64 +48,132 @@
 
     <div class="content">
         <div v-if="currentTab === 'profile' && profile">
-        <h2>My Profile</h2>
+            <h2>My Profile</h2>
 
-        <div class="profile-card">
+            <div class="profile-card">
 
-            <div class="info-row">
-                <span class="label">Name</span>
-                <span>{{ profile.first_name }} {{ profile.last_name }}</span>
-            </div>
+                <div class="info-row">
+                    <span class="label">Name</span>
+                    <span>{{ profile.first_name }} {{ profile.last_name }}</span>
+                </div>
 
-            <div class="info-row">
-                <span class="label">Email</span>
-                <span>{{ profile.email }}</span>
-            </div>
+                <div class="info-row">
+                    <span class="label">Email</span>
+                    <span>{{ profile.email }}</span>
+                </div>
 
-            <div class="info-row">
-                <span class="label">Interests</span>
+                <div class="info-row">
 
-                <div class="tags">
-                    <span
-                        v-for="interest in profile.preferences"
-                        :key="interest"
-                        class="tag"
+                    <div class="section-header">
+                        <span class="label">Interests</span>
+
+                        <button
+                            class="edit-btn"
+                            @click="openInterestEditor"
+                        >
+                            + Edit
+                        </button>
+                    </div>
+                    <div class="tags">
+                        <span
+                            v-for="interest in profile.preferences"
+                            :key="interest.category_id"
+                            class="tag"
+                        >
+                            {{ interest.category_name }}
+                        </span>
+                        <span
+                            v-if="!profile.preferences.length"
+                            class="empty"
+                        >
+                            No interests selected
+                        </span>
+
+                    </div>
+
+                    <div
+                        v-if="showInterestEditor"
+                        class="editor"
                     >
-                        {{ interest }}
-                    </span>
+                        <h3>Select Interests</h3>
 
-                    <span
-                        v-if="!profile.preferences.length"
-                        class="empty"
+                        <label
+                            v-for="interest in interests"
+                            :key="interest.category_id"
+                        >
+
+                            <input
+                                type="checkbox"
+                                :value="interest.category_id"
+                                v-model="selectedInterests"
+                            >
+
+                            {{ interest.category_name }}
+
+                        </label>
+
+                        <button @click="saveInterests">
+                            Save Interests
+                        </button>
+                    </div>
+                </div>
+
+                <div class="info-row">
+                    <div class="section-header">
+                        <span class="label">Skills</span>
+
+                        <button
+                            class="edit-btn"
+                            @click="openSkillEditor"
+                        >
+                            + Edit
+                        </button>
+                    </div>
+                             
+                    <div class="tags">
+                        <span
+                            v-for="skill in profile.skills"
+                            :key="skill"
+                            class="skill-tag"
+                        >
+                            {{ skill }}
+                        </span>
+
+                        <span
+                            v-if="!profile.skills.length"
+                            class="empty"
+                        >
+                            No skills added
+                        </span>
+                    </div>
+
+                    <div
+                        v-if="showSkillEditor"
+                        class="editor"
                     >
-                        No interests selected
-                    </span>
+                        <h3>Select Skills</h3>
+
+                        <label
+                            v-for="skill in skills"
+                            :key="skill"
+                        >
+                            <input
+                                type="checkbox"
+                                :value="skill"
+                                v-model="selectedSkills"
+                            >
+                            {{skill}}
+                        </label>
+                        <button @click="saveSkills">
+                            Save Skills
+                       </button>
+                    </div>
                 </div>
             </div>
-
-            <div class="info-row">
-                <span class="label">Skills</span>
-
-                <div class="tags">
-                    <span
-                        v-for="skill in profile.skills"
-                        :key="skill"
-                        class="skill-tag"
-                    >
-                        {{ skill }}
-                    </span>
-
-                    <span
-                        v-if="!profile.skills.length"
-                        class="empty"
-                    >
-                        No skills added
-                    </span>
-                </div>
-            </div>
-
         </div>
-    </div>
+        <div v-else-if="currentTab === 'profile'">
+            Loading profile...
+        </div>
 
         <div v-else-if="currentTab === 'saved'">
             <h2>Saved Organisations</h2>
@@ -149,27 +217,7 @@
 
 
         <div v-else-if="currentTab === 'volunteer'">
-
-            <h2>Volunteer Allocations</h2>
-
-            <div
-                v-if="volunteerAllocations.length"
-                v-for="allocation in volunteerAllocations"
-                :key="allocation.id"
-            >
-                <p>
-                    {{ allocation.organisation_name }}
-                </p>
-                <p>
-                    {{ allocation.event_name }}
-                </p>
-                <p>
-                    {{ allocation.date }}
-                </p>
-            </div>
-            <p v-else>
-                No volunteer allocations yet.
-            </p>
+            <VolunteerOpportunities />
         </div>
 
 
@@ -193,6 +241,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { api } from "@/services/api";
+import VolunteerOpportunities from "@/components/VolunteerOpportunities.vue";
 
 const router = useRouter();
 const currentTab = ref("profile");
@@ -201,6 +250,15 @@ const savedOrganisations = ref([]);
 const messages = ref([]);
 const volunteerAllocations = ref([]);
 const profile = ref(null);
+
+const showSkillEditor = ref(false);
+const showInterestEditor = ref(false);
+
+const skills = ref([]);
+const interests = ref([]);
+
+const selectedSkills = ref([]);
+const selectedInterests = ref([]);
 
 
 const initials = computed(() => {
@@ -258,6 +316,51 @@ onMounted(() => {
     loadProfile();
 });
 
+async function openSkillEditor(){
+    skills.value = await api.getSkills();
+    selectedSkills.value = [
+        ...profile.value.skills
+    ];
+    showSkillEditor.value = true;
+}
+
+async function saveSkills(){
+    await api.updateSkills(
+        user.value.user_id,
+        selectedSkills.value
+    );
+    profile.value.skills = [
+        ...selectedSkills.value
+    ];
+    showSkillEditor.value = false;
+}
+
+async function openInterestEditor(){
+    interests.value = await api.getInterests();
+    console.log(
+        "AVAILABLE INTERESTS:",
+        interests.value
+    );
+    selectedInterests.value = profile.value.preferences.map(
+        interest => interest.category_id
+    );
+    console.log(
+        "SELECTED:",
+        selectedInterests.value
+    );
+    showInterestEditor.value = true;
+}
+
+async function saveInterests(){
+    await api.updateInterests(
+        user.value.user_id,
+        selectedInterests.value
+    );
+    profile.value = await api.getProfile(
+        user.value.user_id
+    );
+    showInterestEditor.value = false;
+}
 </script>
 
 <style scoped>
@@ -393,5 +496,44 @@ button{
     color:#888;
     font-style:italic;
 }
+.section-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
 
+.edit-btn{
+    background:#8B5A3C;
+    color:white;
+    border:none;
+    padding:6px 14px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.editor{
+    margin-top:20px;
+    padding:20px;
+    background:#FAF8F5;
+    border-radius:12px;
+    border:1px solid #E7DDD2;
+
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.editor label{
+    display:flex;
+    gap:10px;
+}
+
+.editor button{
+    margin-top:15px;
+    background:#8B5A3C;
+    color:white;
+    border:none;
+    padding:10px;
+    border-radius:8px;
+}
 </style>

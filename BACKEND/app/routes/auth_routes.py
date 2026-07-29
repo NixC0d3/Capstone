@@ -224,7 +224,7 @@ def get_profile(user_id):
     user = User.query.get_or_404(user_id)
 
     preferences = (
-        db.session.query(Category.category_name)
+        db.session.query(Category.category_id,Category.category_name)
         .join(UserPreference,Category.category_id == UserPreference.category_id)
         .filter(UserPreference.user_id == user_id).all()
     )
@@ -238,11 +238,17 @@ def get_profile(user_id):
         "role_id": user.role_id,
         "location_id": user.location_id,
         "preferences": [
-            p.category_name
+            {
+                "category_id": p.category_id,
+                "category_name": p.category_name
+            }
             for p in preferences
         ],
         "skills": [
-            s.skill_name
+            {
+                "user_skill_id": s.user_skill_id,
+                "skill_name": s.skill_name
+            }
             for s in skills
         ]
     })

@@ -29,6 +29,7 @@ def create_app():
     from app.routes.report_routes import report_bp
     from app.routes.engagement_routes import engagement_bp
     from app.routes.save_routes import save_bp
+    from app.routes.user_routes import user_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(organisation_bp, url_prefix="/api/organisations")
@@ -40,6 +41,7 @@ def create_app():
     app.register_blueprint(report_bp, url_prefix="/api/reports")    
     app.register_blueprint(engagement_bp, url_prefix="/api/engagement")
     app.register_blueprint(save_bp, url_prefix="/api/saves")
+    app.register_blueprint(user_bp, url_prefix="/api/users")
     
     @app.route("/api/health")
     def health_check():

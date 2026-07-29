@@ -113,6 +113,12 @@ export const api = {
       body: JSON.stringify(data)
     });
   },
+  getVolunteerOpportunities(){
+    return request("/volunteer-allocation/opportunities");
+  },
+  signupVolunteer(data){
+    return request("/volunteer-allocation/signup", {method:"POST", body:JSON.stringify(data)});
+  },
   
   // Saved Organisations
   saveOrganisation(data) {
@@ -180,6 +186,10 @@ export const api = {
    getBusinessDashboardReport(userId) {
     return request(`/reports/business-dashboard/${userId}`);
   },  
+  getConversationById(conversationId, userId) {
+    return request(`/messages/conversation/${conversationId}?user_id=${userId}`);
+  },
+
   // Admin
   getUsers(status = "all"){
     return request(`/admin/users?status=${status}`);
@@ -207,4 +217,40 @@ export const api = {
       return request("/admin/organisations");
   },
   
+  //Uer MAnagement
+  getProfile(userId){
+    return request(`/users/${userId}/profile`);
+  },
+  updateProfile(userId,data){
+      return request(`/users/${userId}/profile`,{
+          method:"PUT",
+          body:JSON.stringify(data)
+      });
+  },
+
+  getSkills(){
+      return request("/users/skills");
+  },
+
+  updateSkills(userId,skills){
+      return request(`/users/${userId}/skills`,{
+          method:"PUT",
+          body:JSON.stringify({
+              skills
+          })
+      });
+  },
+
+  getInterests(){
+      return request("/users/interests");
+  },
+
+  updateInterests(userId,categories){
+      return request(`/users/${userId}/interests`,{
+          method:"PUT",
+          body:JSON.stringify({
+              categories
+          })
+      });
+  }
 };
