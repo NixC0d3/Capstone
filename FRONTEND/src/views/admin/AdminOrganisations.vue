@@ -75,7 +75,7 @@ const search = ref("");
 const typeFilter = ref("all");
 async function loadOrganisations() {
     try {
-        organisations.value = await api.getAdminOrganisations();;
+        organisations.value = await api.getAdminOrganisations();
     } catch(error) {
         console.error("Failed loading organisations:", error);
     }

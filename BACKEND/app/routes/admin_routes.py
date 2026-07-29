@@ -132,3 +132,33 @@ def getAdminOrganisations():
         }
         for org in organisations
     ])
+
+@admin_bp.route("/organisations/<int:organisation_id>", methods=["GET"])
+def get_admin_organisation(organisation_id):
+    org = Organisation.query.get_or_404(organisation_id)
+
+    return jsonify({
+        "organisation_id": org.organisation_id,
+        "organisation_name": org.organisation_name,
+        "organisation_type": org.organisation_type,
+        "description": org.description,
+        "phone": org.phone,
+        "email": org.email,
+        "website_url": org.website_url,
+        "created_at": org.created_at,
+        "owner": {
+            "user_id": org.owner.user_id,
+            "name": f"{org.owner.first_name} {org.owner.last_name}"
+        },
+        "category": (
+            org.category.category_name
+            if org.category else None
+        ),
+        "location": (
+            {
+                "town": org.location.town,
+                "parish": org.location.parish
+            }
+            if org.location else None
+        )
+    })

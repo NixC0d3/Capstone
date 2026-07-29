@@ -116,6 +116,12 @@
                 Suspicious
             </button>
 
+            <button
+                class="back-button"
+                @click="router.back()"
+            >
+                Back
+            </button>
             </div>
         </div>
 
@@ -178,23 +184,6 @@ async function review(reason){
 </script>
 
 <style scoped>
-
-.back-button{
-    margin-bottom:20px;
-    padding:10px 18px;
-    background:white;
-    color:#8B5A3C;
-    border:2px solid #8B5A3C;
-    border-radius:8px;
-    cursor:pointer;
-    font-weight:bold;
-}
-
-.back-button:hover{
-    background:#8B5A3C;
-    color:white;
-}
-
 .page{
     padding:40px;
     background:#F6F2ED;
@@ -206,6 +195,16 @@ async function review(reason){
     padding:25px;
     margin-bottom:25px;
     border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+}
+
+h1{
+    color:#8B5A3C;
+}
+
+h2{
+    color:#8B5A3C;
+    margin-bottom:20px;
 }
 
 button{
@@ -217,19 +216,17 @@ button{
     border-radius:8px;
     cursor:pointer;
 }
-table{
-    width:100%;
-    border-collapse:collapse;
-}
 
-th, td{
-    padding:12px;
-    text-align:left;
-    border-bottom:1px solid #ddd;
-}
-
-th{
+.back-button{
+    margin-top:20px;
+    background:white;
     color:#8B5A3C;
+    border:2px solid #8B5A3C;
 }
 
+hr{
+    border:none;
+    border-top:1px solid #eee;
+    margin:15px 0;
+}
 </style>

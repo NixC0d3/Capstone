@@ -15,7 +15,7 @@
         <div class="card">
             <h2>Organisations</h2>
             <p>{{ organisationCount }}</p>
-            <button>
+            <button @click="router.push('/admin/organisations')">
                 Manage Organisations
             </button>
         </div>

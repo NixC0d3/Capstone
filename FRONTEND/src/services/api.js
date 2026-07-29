@@ -216,6 +216,9 @@ export const api = {
   getAdminOrganisations(){
       return request("/admin/organisations");
   },
+  getAdminOrganisation(id) {
+    return request(`/admin/organisations/${id}`);
+  },
   
   //Uer MAnagement
   getProfile(userId){
