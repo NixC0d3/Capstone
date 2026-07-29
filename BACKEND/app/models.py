@@ -35,6 +35,7 @@ class User(db.Model, SerializerMixin):
     skills = db.relationship("UserSkill",backref="user",lazy=True)
     display_name = db.Column(db.String(150))
     last_login_at = db.Column(db.DateTime)
+    account_status = db.Column(db.String(30), default="active")
 
 class Category(db.Model, SerializerMixin):
     __tablename__ = "categories"
@@ -79,6 +80,8 @@ class Organisation(db.Model, SerializerMixin):
 
     organisation_id = db.Column(db.Integer, primary_key=True)
     owner_user_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), nullable=False)
+    owner_first_name = db.Column(db.String(80),nullable=True)
+    owner_last_name = db.Column(db.String(80),nullable=True)
     category_id = db.Column(db.Integer, db.ForeignKey("categories.category_id"), nullable=True)
     location_id = db.Column(db.Integer, db.ForeignKey("locations.location_id"), nullable=True)
     organisation_name = db.Column(db.String(150), nullable=False)
@@ -313,3 +316,13 @@ class OrganisationFactor(db.Model):
     )
 
     organisation = db.relationship("Organisation", backref="factor")
+
+class UserModeration(db.Model):
+    __tablename__ = "user_moderations"
+
+    moderation_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), nullable=False)
+    reason = db.Column(db.String(30), nullable=False)
+    notes = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship("User",backref=db.backref("moderation_records", lazy=True, cascade="all, delete"))

@@ -139,6 +139,8 @@ def create_organisation():
 
     organisation = Organisation(
         owner_user_id=data.get("owner_user_id"),
+        owner_first_name=data.get("owner_first_name"),
+        owner_last_name=data.get("owner_last_name"),
         category_id=data.get("category_id"),
         location_id=location.location_id,
         organisation_name=data.get("organisation_name", ""),

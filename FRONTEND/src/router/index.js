@@ -1,23 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
 
-import LoginView from "@/views/auth/LoginView.vue";
-import Signup from "@/views/auth/Signup.vue";
-import About from "@/views/About.vue";
-
-import GeneralUserHome from "@/views/general-user/GeneralUserHome.vue";
-import GeneralUserProfile from "@/views/general-user/GeneralUserProfile.vue";
-import GeneralUserCharity from "@/views/general-user/GeneralUserCharity.vue";
-
-import BusinessHome from "@/views/business-owner/BusinessHome.vue";
-import BusinessProfile from "@/views/business-owner/BusinessProfile.vue";
-import CharityProfile from "@/views/charity-owner/CharityProfile.vue";
-import CreateOrg from "@/views/business-charity/CreateOrg.vue";
-import EditOrg from "@/views/business-charity/EditOrg.vue";
-import CharityHome from "@/views/charity-owner/CharityHome.vue";
-
-import OrgView from "@/views/general-user/OrgView.vue";
-import Inbox from "@/views/Inbox.vue";
-
 const router = createRouter({
 
   history: createWebHistory(),
@@ -29,100 +11,120 @@ const router = createRouter({
     },
     {
       path: "/login",
-      component: LoginView
+      component: () => import("@/views/auth/LoginView.vue")
     },
 
     {
       path: "/signup",
-      component: Signup
+      component: () => import("@/views/auth/Signup.vue")
     },
     {
       path: "/generaluser/home",
-      component: GeneralUserHome
+      component: () => import("@/views/general-user/GeneralUserHome.vue")
     },
     {
       path: "/organisation/:id",
-      component: OrgView
+      component: () => import("@/views/general-user/OrgView.vue")
     },
 
     {
       path: "/generaluser/charities",
-      component: GeneralUserCharity
+      component: () => import("@/views/general-user/GeneralUserCharity.vue")
     },
     {
       path: "/generaluser/profile",
-      component: GeneralUserProfile
+      component: () => import("@/views/general-user/GeneralUserProfile.vue")
     },
     {
       path: "/generaluser/inbox",
-      component: Inbox
+      component: () => import("@/views/Inbox.vue")
     },
     {
       path: "/business-user/inbox",
-      component: Inbox
+      component: () => import("@/views/Inbox.vue")
     },
     {
       path: "/charity-user/inbox",
-      component: Inbox
+      component: () => import("@/views/Inbox.vue")
     },
     {
       path: "/business-user/home",
-      component: BusinessHome
+      component: () => import("@/views/business-owner/BusinessHome.vue")
     },
     {
       path: "/charity-user/home",
-      component: CharityHome
+      component: () => import("@/views/charity-owner/CharityHome.vue")
     },
     {
       path: "/about",
-      component: About
+      component: () => import("@/views/About.vue")
     },
     {
       path: "/business-user/profile",
-      component: BusinessProfile
+      component: () => import("@/views/business-owner/BusinessProfile.vue")
     },
-
     {
       path: "/charity-user/profile",
-      component: CharityProfile
+      component: () => import("@/views/charity-owner/CharityProfile.vue")
     },
     
     {
       path: "/business-user/create-organisation",
-      component: CreateOrg,
+      component: () => import("@/views/business-charity/CreateOrg.vue"),
       props: {
         organisationType: "business"
       }
     },
-    
     {
       path: "/charity-user/create-organisation",
-      component: CreateOrg,
+      component: () => import("@/views/business-charity/CreateOrg.vue"),
       props: {
         organisationType: "charity"
       }
     },
-
     {
       path: "/business-user/edit-organisation",
-      component: EditOrg,
+      component: () => import("@/views/business-charity/EditOrg.vue"),
       props: {
         organisationType: "business"
       }
     },
-
     {
       path: "/charity-user/edit-organisation",
-      component: EditOrg,
+      component: () => import("@/views/business-charity/EditOrg.vue"),
       props: {
         organisationType: "charity"
       }
     },
-    
     {
       path: "/charity-user/volunteer-matches",
       name: "CharityVolunteerMatches",
       component: () => import("@/views/charity-owner/VolunteerMatches.vue")
+    },
+    {
+      path: "/admin/home",
+      component: () => import("@/views/admin/AdminHome.vue")
+
+    },
+    {
+      path: "/admin/users",
+      component: () => import("@/views/admin/AdminUsers.vue")
+    },
+    {
+      path: "/admin/settings",
+      component: () => import("@/views/admin/AdminSettings.vue")
+    },
+    {
+      path:"/admin/users/:id",
+      component: () => import("@/views/admin/AdminUserDetails.vue")
+    },
+    {
+      path:"/admin/organisations",
+      component: () => import("@/views/admin/AdminOrganisations.vue")
+    },
+    {
+      path: "/admin/organisations/:id",
+      component: () => import("@/views/admin/AdminOrgDetails.vue")
     }
 
   ]

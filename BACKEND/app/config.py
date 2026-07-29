@@ -13,7 +13,7 @@ class Config(object):
     # DATABASE_URL=postgresql://postgres:your_password@localhost:5432/capstone
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost:5432/capstone"
+        "postgresql://postgres:your_passworde@localhost:5432/capstone"
     ).replace("postgres://", "postgresql://")
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
