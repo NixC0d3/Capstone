@@ -71,13 +71,20 @@ const props = defineProps({
 });
 
 async function openCharity() {
+  const charityId = props.charity?.organisation_id || props.charity?.id;
+
+  if (!charityId) {
+    console.error("No charity ID found:", props.charity);
+    return;
+  }
+
   try {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const userId = user.user_id || user.id;
 
-    if (userId && props.charity?.organisation_id) {
+    if (userId) {
       await api.logEngagement({
-        organisation_id: props.charity.organisation_id,
+        organisation_id: charityId,
         user_id: userId,
         engagement_type: "profile_view"
       });
@@ -86,7 +93,7 @@ async function openCharity() {
     console.error("Failed to log profile view:", error);
   }
 
-  router.push(`/generaluser/organisation/${props.charity.organisation_id}`);
+  router.push(`/organisation/${charityId}`);
 }
 
 </script>

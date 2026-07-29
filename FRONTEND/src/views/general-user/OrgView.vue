@@ -11,13 +11,13 @@
   </div>
 
   <div v-else>
-    <div class="hero">
+    <div class="hero-image-box">
       <img
-        class="hero-image"
-        :src="organisation.image || 'https://placehold.co/500x300'"
-        alt="Organisation"
-        />
-     </div>
+        class="hero-logo"
+        :src="organisation.image || organisation.image_url || '/CIH_logo.jpeg'"
+        :alt="organisation.organisation_name"
+      />
+    </div>
 
     <div class="content">
       <!-- LEFT SIDE -->
@@ -336,10 +336,22 @@ async function saveOrganisation() {
   margin-bottom:40px;
 }
 
-.hero-image{
-  width:420px;
-  border-radius:15px;
-  box-shadow:0 10px 30px rgba(0,0,0,.08);
+
+.hero-image-box {
+  width: 100%;
+  height: 220px;
+  background: #f3eee9;
+  border-radius: 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-logo {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
 }
 
 .content{
