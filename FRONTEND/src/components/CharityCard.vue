@@ -2,7 +2,7 @@
 
 <div
   class="charity-card"
-  @click="openOrganisation"
+  @click="openCharity"
 >
     <span 
     v-if="charity.organisation_type === 'charity'"
@@ -43,11 +43,11 @@
             Donate
         </button>
 
-        <button 
-        class="learn"
-        @click="learnMore"
+        <button
+          class="learn-more-btn"
+          @click.stop="openCharity"
         >
-            Learn More
+          Learn More
         </button>
     </div>
 
@@ -64,18 +64,13 @@ import { api } from "@/services/api";
 const router = useRouter();
 
 const props = defineProps({
-    charity:{
-        type:Object,
-        required:true
-    }
+  charity: {
+    type: Object,
+    required: true
+  }
 });
 
-
-function learnMore(){
-    router.push(`/organisation/${props.charity.organisation_id}`);
-}
-
-async function openOrganisation() {
+async function openCharity() {
   try {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const userId = user.user_id || user.id;
