@@ -23,9 +23,12 @@ class="card"
 
 
         <div class="tags">
-            <span>
-                {{ organisation.category_name }}
-            </span>
+          <span
+            v-for="category in displayCategoryList"
+            :key="category"
+          >
+            {{ category }}
+          </span>
         </div>
 
         <div class="rating">
@@ -33,11 +36,7 @@ class="card"
         </div>
 
         <p class="location">
-            📍 
-            {{
-                organisation.address || organisation.town || organisation.parish
-                || "Location unavailable"
-            }}
+          📍 {{ formatLocation(organisation) }}
         </p>
 
         <p class="description">
@@ -61,15 +60,55 @@ const props = defineProps({
     }
 });
 
-const displayCategories = computed(() => {
-  if (props.organisation.categories && props.organisation.categories.length > 0) {
-    return props.organisation.categories
-      .map(category => category.category_name)
-      .join(", ");
+const displayCategoryList = computed(() => {
+  const categoryNames = [];
+
+  if (props.organisation.category_name) {
+    categoryNames.push(props.organisation.category_name);
   }
 
-  return props.organisation.category_name || "Uncategorized";
+  if (props.organisation.categories && props.organisation.categories.length > 0) {
+    props.organisation.categories.forEach(category => {
+      if (category.category_name) {
+        categoryNames.push(category.category_name);
+      }
+    });
+  }
+
+  // Remove duplicates
+  const uniqueCategories = [...new Set(categoryNames)];
+
+  if (uniqueCategories.length === 0) {
+    return ["Uncategorized"];
+  }
+
+  return uniqueCategories;
 });
+
+function formatLocation(organisation) {
+  const parts = [];
+
+  // 1. Parish first
+  if (organisation.parish) {
+    parts.push(organisation.parish);
+  }
+
+  // 2. Town second
+  if (organisation.town) {
+    parts.push(organisation.town);
+  }
+
+  // 3. Road/address last
+  if (organisation.address) {
+    parts.push(organisation.address);
+  }
+
+  if (parts.length === 0) {
+    return "Location unavailable";
+  }
+
+  return parts.join(", ");
+}
 
 function openOrganization() {
     router.push(`/organisation/${props.organisation.organisation_id}`)

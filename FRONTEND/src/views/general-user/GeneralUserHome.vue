@@ -58,7 +58,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 
 import SearchBar from "@/components/SearchBar.vue";
 import OrganisationCard from "@/components/OrganisationCard.vue";
@@ -160,24 +160,109 @@ onMounted(async () => {
 
 
 /*
+  NORMALISE FILTER VALUES
+
+  This makes the search safer because SearchBar may return either:
+  - a category_id, or
+  - a category_name, or
+  - a full category object.
+*/
+function getSelectedCategoryId() {
+  const value = selectedCategory.value;
+
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "object") {
+    return value.category_id || "";
+  }
+
+  const numericValue = Number(value);
+
+  if (!Number.isNaN(numericValue)) {
+    return numericValue;
+  }
+
+  const matchedCategory = categories.value.find(category => {
+    return String(category.category_name).toLowerCase().trim() ===
+      String(value).toLowerCase().trim();
+  });
+
+  return matchedCategory ? matchedCategory.category_id : "";
+}
+
+
+function getSelectedParish() {
+  const value = selectedLocation.value;
+
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "object") {
+    return value.parish || "";
+  }
+
+  const matchedLocation = locations.value.find(location => {
+    return String(location.location_id) === String(value);
+  });
+
+  return matchedLocation ? matchedLocation.parish : value;
+}
+
+
+/*
   SEARCH ORGANISATIONS FROM DATABASE
 */
 async function searchOrganizations() {
   try {
     hasSearched.value = true;
 
-    organisations.value = await api.getOrganisations({
-      search: searchTerm.value,
-      category_id: selectedCategory.value,
-      parish: selectedLocation.value,
+    const params = {
       type: "business"
-    });
+    };
+
+    if (searchTerm.value.trim()) {
+      params.search = searchTerm.value.trim();
+    }
+
+    if (selectedCategory.value) {
+      params.category_id = selectedCategory.value;
+    }
+
+    if (selectedLocation.value) {
+      params.parish = selectedLocation.value;
+    }
+
+    const data = await api.getOrganisations(params);
+
+    organisations.value = await addSavedStatus(data);
 
     console.log("Search results:", organisations.value);
   } catch (error) {
     console.error("Error searching organisations:", error);
   }
 }
+
+
+/*
+  LIVE SEARCH
+
+  This runs automatically as the user types or changes category/location.
+*/
+let searchTimer = null;
+
+watch(
+  [searchTerm, selectedCategory, selectedLocation],
+  () => {
+    clearTimeout(searchTimer);
+
+    searchTimer = setTimeout(() => {
+      searchOrganizations();
+    }, 300);
+  }
+);
 
 
 /*

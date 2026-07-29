@@ -33,11 +33,11 @@
     >
       <option value="">All Locations</option>
       <option
-      v-for="location in locations"
-      :key="location.id"
-      :value="location.parish"
+        v-for="location in visibleLocations"
+        :key="typeof location === 'object' ? location.location_id : location"
+        :value="typeof location === 'object' ? location.parish : location"
       >
-      {{location.parish}}
+        {{ typeof location === 'object' ? location.parish : location }}
       </option>
     </select>
 
@@ -51,6 +51,23 @@
 
 
 <script setup>
+	
+import { computed } from "vue";
+
+const hiddenLocations = ["kingston", "islandwide", "trewlany"];
+
+const visibleLocations = computed(() => {
+  return props.locations.filter(location => {
+    const locationName =
+      typeof location === "object"
+        ? location.parish
+        : location;
+
+    return !hiddenLocations.includes(
+      String(locationName).toLowerCase().trim()
+    );
+  });
+});
 
 const props = defineProps({
   searchTerm: String,

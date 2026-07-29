@@ -2,7 +2,12 @@
 
 <nav class="navbar">
     <router-link class="brand" to="/business-user/home">
-        CivilInfoHub
+      <img
+        src="/CIH_logo.jpeg"
+        alt="CivilInfoHub Logo"
+        class="brand-logo"
+      />
+      <span>CivilInfoHub</span>
     </router-link>
 
     <div class="nav-links">
@@ -112,10 +117,20 @@ function logout(){
 }
 
 .brand {
+    display:flex;
+    align-items:center;
+    gap:10px;
     text-decoration:none;
     font-size:24px;
     font-weight:bold;
     color:#8B5A3C;
+}
+
+.brand-logo {
+    width:38px;
+    height:38px;
+    object-fit:contain;
+    border-radius:50%;
 }
 
 .nav-links {
