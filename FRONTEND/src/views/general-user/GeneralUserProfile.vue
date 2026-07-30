@@ -38,10 +38,10 @@
         </button>
 
         <button
-            :class="{ active: currentTab === 'settings' }"
-            @click="currentTab = 'settings'"
+            :class="{ active: currentTab === 'notices' }"
+            @click="currentTab = 'notices'"
         >
-            Settings
+            Account Notices
         </button>
 
     </div>
@@ -220,14 +220,31 @@
             <VolunteerOpportunities />
         </div>
 
+        <div v-else-if="currentTab === 'notices'">
+            <h2>Notices</h2>
 
-        <div v-else>
+            <div
+                v-if="notices.length"
+                class="notice-card"
+                v-for="notice in notices"
+                :key="notice.date"
+            >
+                <h3>
+                    {{ notice.reason }}
+                </h3>
 
-            <h2>Account Settings</h2>
+                <p>
+                    {{ notice.notes }}
+                </p>
 
-            <button>Edit Profile</button>
+                <small>
+                    {{ notice.date }}
+                </small>
 
-            <button>Change Password</button>
+            </div>
+            <p v-else>
+                No account notices.
+            </p>
 
         </div>
 
@@ -250,7 +267,7 @@ const savedOrganisations = ref([]);
 const messages = ref([]);
 const volunteerAllocations = ref([]);
 const profile = ref(null);
-
+const notices = ref([]);
 const showSkillEditor = ref(false);
 const showInterestEditor = ref(false);
 
@@ -285,6 +302,8 @@ async function loadProfile(){
     try{
         savedOrganisations.value = await api.getSavedOrganisations(storedUser.user_id);
         profile.value = await api.getProfile(storedUser.user_id);
+        const details = await api.getUserDetails(storedUser.user_id);
+        notices.value = details.moderation_history;
     }catch(error){
         console.error("Error loading saved organisations:", error);
     }
@@ -535,5 +554,30 @@ button{
     border:none;
     padding:10px;
     border-radius:8px;
+}
+.notice-card{
+    background:#fff3cd;
+    border-left:4px solid #f4a261;
+    padding:12px 16px;
+    border-radius:10px;
+    margin-bottom:12px;
+}
+
+.notice-card h3{
+    color:#8B5A3C;
+    text-transform:capitalize;
+    font-size:16px;
+    margin:0 0 6px 0;
+}
+
+.notice-card p{
+    margin:0 0 8px 0;
+    font-size:14px;
+    color:#555;
+}
+
+.notice-card small{
+    color:#777;
+    font-size:12px;
 }
 </style>

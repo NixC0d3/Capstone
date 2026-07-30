@@ -20,7 +20,7 @@
         </router-link>
 
         <router-link to="/admin/settings">
-            Settings
+            Trend Score
         </router-link>
     </div>
 

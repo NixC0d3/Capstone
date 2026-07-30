@@ -23,6 +23,23 @@
                     Charity
                 </option>
             </select>
+            <select v-model="statusFilter">
+                <option value="all">
+                    All Statuses
+                </option>
+
+                <option value="active">
+                    Active
+                </option>
+
+                <option value="suspended">
+                    Suspended
+                </option>
+
+                <option value="deactivated">
+                    Deactivated
+                </option>
+            </select>
         </div>
         <table>
 
@@ -31,6 +48,7 @@
                     <th>Organisation</th>
                     <th>Owner</th>
                     <th>Type</th>
+                    <th>Status</th>
                     <th></th>
                 </tr>
             </thead>
@@ -42,7 +60,11 @@
                     <td>{{org.organisation_name}}</td>
                     <td>{{org.owner}}</td>
                     <td>{{ formatType(org.organisation_type) }}</td>
-
+                    <td>
+                        <span :class="['status', org.org_status]">
+                            {{ org.org_status }}
+                        </span>
+                    </td>
                     <td>
                         <button @click="viewOrganisation(org.organisation_id)">
                             View
@@ -50,14 +72,12 @@
                     </td>
 
                 </tr>
-
+                <tr v-if="filteredOrganisations.length === 0">
+                    <td colspan="5">
+                        No organisations found.
+                    </td>
+                </tr>
             </tbody>
-            <tr v-if="filteredOrganisations.length === 0">
-                <td colspan="4">
-                    No organisations found.
-                </td>
-            </tr>
-
         </table>
 
     </div>
@@ -72,6 +92,7 @@ import {api} from "@/services/api";
 const router = useRouter();
 const organisations = ref([]);
 const search = ref("");
+const statusFilter = ref("all");
 const typeFilter = ref("all");
 async function loadOrganisations() {
     try {
@@ -96,7 +117,11 @@ const filteredOrganisations = computed(() => {
             typeFilter.value === "all" ||
             org.organisation_type === typeFilter.value
 
-        return searchMatch && typeMatch;
+        const statusMatch =
+            statusFilter.value === "all" ||
+            org.org_status === statusFilter.value;
+
+        return searchMatch && typeMatch && statusMatch;
     });
 });
 
@@ -168,6 +193,25 @@ button{
 button:hover{
     opacity:.9;
 }
+.status{
+    display:inline-block;
+    padding:5px 12px;
+    border-radius:20px;
+    color:white;
+    font-size:13px;
+    font-weight:bold;
+    text-transform:capitalize;
+}
 
+.status.active{
+    background:#28a745;
+}
+.status.suspended{
+    background:#f4a261;
+}
+
+.status.deactivated{
+    background:#d62828;
+}
 
 </style>

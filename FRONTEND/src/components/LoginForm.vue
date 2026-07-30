@@ -44,7 +44,7 @@ async function login(){
 
       case 4:
         // Admin dashboard
-        //router.push("/admin-user/home");
+        router.push("/admin/home");
         break;
 
       default:

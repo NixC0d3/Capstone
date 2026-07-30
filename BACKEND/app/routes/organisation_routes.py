@@ -71,7 +71,9 @@ def list_organisations():
     parish = request.args.get("parish", "").strip()
     organisation_type = request.args.get("type", "").strip()
 
-    query = Organisation.query
+    query = Organisation.query.filter(
+        Organisation.org_status == "active"
+    )
 
     # Filter by organisation type: business or charity
     if organisation_type:
@@ -240,8 +242,12 @@ def get_organisation(organisation_id):
     """
     Gets one organisation by ID.
     """
-
     organisation = Organisation.query.get_or_404(organisation_id)
+    if organisation.org_status != "active":
+        return jsonify(
+            error="Organisation is unavailable"
+        ), 403
+    
     return jsonify(organisation_to_dict(organisation))
 
 @organisation_bp.route("/<int:organisation_id>", methods=["PUT"])

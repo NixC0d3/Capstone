@@ -71,12 +71,17 @@ def review_user(user_id):
         ),400
     user.account_status = reason
 
+    warning_messages = {
+        "spam": "Your account has been flagged for spam. Please ensure your future activity follows our community guidelines.",
+        "inappropriate": "Your account has been flagged for inappropriate behaviour. Please review our community guidelines.",
+        "suspicious": "Your account has been flagged for suspicious activity. If you believe this is a mistake, please contact support."
+    }
+
     moderation = UserModeration(
         user_id=user_id,
-        reason=data.get("reason"),
-        notes=data.get("notes")
+        reason=reason,
+        notes=warning_messages[reason]
     )
-
     db.session.add(moderation)
     db.session.commit()
 
@@ -128,6 +133,7 @@ def getAdminOrganisations():
             "organisation_name": org.organisation_name,
             "owner": f"{org.owner.first_name} {org.owner.last_name}",
             "organisation_type": org.organisation_type,
+            "org_status": org.org_status,
             "created_by": org.owner.role.role_name
         }
         for org in organisations
@@ -141,6 +147,7 @@ def get_admin_organisation(organisation_id):
         "organisation_id": org.organisation_id,
         "organisation_name": org.organisation_name,
         "organisation_type": org.organisation_type,
+        "org_status": org.org_status,
         "description": org.description,
         "phone": org.phone,
         "email": org.email,
@@ -162,3 +169,30 @@ def get_admin_organisation(organisation_id):
             if org.location else None
         )
     })
+
+@admin_bp.route("/organisations/<int:organisation_id>/status", methods=["PUT"])
+def update_organisation_status(organisation_id):
+
+    data = request.get_json()
+
+    org = Organisation.query.get_or_404(organisation_id)
+
+    status = data.get("status")
+
+    allowed = [
+        "active",
+        "suspended",
+        "deactivated"
+    ]
+
+    if status not in allowed:
+        return jsonify(error="Invalid status"),400
+
+    org.org_status = status
+
+    db.session.commit()
+
+    return jsonify(
+        message="Organisation status updated",
+        status=org.org_status
+    )

@@ -3,8 +3,8 @@
 
     <div class="header">
       <h1>{{ organisation.organisation_name }}</h1>
-      <span class="status">
-        {{ formatType(organisation.organisation_type) }}
+      <span :class="['status', organisation.org_status]">
+        {{formatStatus(organisation.org_status) }}
       </span>
     </div>
 
@@ -89,12 +89,18 @@
 
     <div class="actions">
 
-      <button class="warning">
-        Deactivate
+      <button 
+        class="warning" 
+        @click="updateOrganisationStatus('suspended')"
+      >
+        {{ organisation.org_status === "suspended" ? "Activate" : "Suspend" }}
       </button>
 
-      <button class="danger">
-        Delete
+      <button 
+        class="danger" 
+        @click="updateOrganisationStatus('deactivated')"
+      >
+        {{ organisation.org_status === "deactivated" ? "Activate" : "Deactivate" }}
       </button>
 
       <button @click="router.back()">
@@ -120,6 +126,12 @@ const router = useRouter();
 
 const organisation = ref(null);
 
+function formatStatus(status) {
+  if (!status) return "";
+
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
 async function loadOrganisation() {
   try {
     organisation.value = await api.getAdminOrganisation(
@@ -139,6 +151,34 @@ function formatType(type) {
 onMounted(() => {
   loadOrganisation();
 });
+
+async function updateOrganisationStatus(status){
+
+  try {
+    let newStatus = status;
+
+    if (status === "suspended"){
+      newStatus =
+        organisation.value.org_status === "suspended"
+          ? "active"
+          : "suspended";
+    }
+    if (status === "deactivated") {
+      newStatus =
+        organisation.value.org_status === "deactivated"
+          ? "active"
+          : "deactivated";
+    }
+
+    await api.updateOrganisationStatus(
+      route.params.id,
+      newStatus
+    );
+    organisation.value.org_status = newStatus;
+  } catch(error){
+    console.error(error);
+  }
+}
 </script>
 
 <style scoped>
@@ -164,7 +204,20 @@ onMounted(() => {
     border-radius:20px;
     font-weight:bold;
 }
+.status.active{
+    background:#d8f3dc;
+    color:#2d6a4f;
+}
 
+.status.suspended{
+    background:#f4a261;
+    color:white;
+}
+
+.status.deactivated{
+    background:#d62828;
+    color:white;
+}
 .card{
     background:white;
     border-radius:15px;

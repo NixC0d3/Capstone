@@ -219,7 +219,13 @@ export const api = {
   getAdminOrganisation(id) {
     return request(`/admin/organisations/${id}`);
   },
-  
+  updateOrganisationStatus(id, status){
+    return request(`/admin/organisations/${id}/status`,{
+      method:"PUT",
+      body:JSON.stringify({status:status})
+      }
+    );
+  },
   //Uer MAnagement
   getProfile(userId){
     return request(`/users/${userId}/profile`);

@@ -161,22 +161,19 @@ onMounted(async()=>{
     }
 });
 
-async function review(reason){
-    try{
-        await api.reviewUser(
-            route.params.id,
-            {
-                reason:reason,
-                notes:"Reviewed by admin"
-            }
-        );
+async function review(reason) {
+    try {
+        await api.reviewUser(route.params.id, {
+            reason: reason
+        });
+
         const data = await api.getUserDetails(route.params.id);
 
         user.value = data.user;
         activity.value = data.activity;
         moderationHistory.value = data.moderation_history;
     }
-    catch(error){
+    catch (error) {
         console.error(error);
     }
 }
