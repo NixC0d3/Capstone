@@ -113,11 +113,28 @@ export const api = {
       body: JSON.stringify(data)
     });
   },
-  getVolunteerOpportunities(){
-    return request("/volunteer-allocation/opportunities");
+  
+  declineVolunteer(volunteerNeedId, data) {
+    return request(`/volunteer-allocation/need/${volunteerNeedId}/decline`, {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
   },
-  signupVolunteer(data){
-    return request("/volunteer-allocation/signup", {method:"POST", body:JSON.stringify(data)});
+  
+  getVolunteerOpportunities(userId = null) {
+    const query = userId ? `?user_id=${userId}` : "";
+    return request(`/volunteer-allocation/opportunities${query}`);
+  },
+
+  signupVolunteer(data) {
+    return request("/volunteer-allocation/signup", {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
+  },
+
+  getMyVolunteerApplications(userId) {
+    return request(`/volunteer-allocation/my-applications?user_id=${userId}`);
   },
   
   // Saved Organisations

@@ -102,20 +102,20 @@
         </p>
 
         <button @click="selectNeed(needItem.volunteer_need_id)">
-          Find Matching Volunteers
+          Review Signed-up Volunteers
         </button>
       </div>
     </section>
 
     <section v-if="selectedNeedId" ref="matchesSection" class="matches-section">
-      <h2>Recommended Volunteers</h2>
+      <h2>Volunteer Applicants Ranked by Match Score</h2>
 
       <p v-if="loadingMatches">
-        Loading matches...
+          Loading matches...
       </p>
 
       <p v-else-if="matches.length === 0">
-        No matching volunteers found.
+          No users have signed up for this opportunity yet.
       </p>
 
       <div v-else class="matches-grid">
@@ -162,9 +162,21 @@
             <h4>Total Match Score: {{ match.match_score }}</h4>
           </div>
 
-          <button @click="allocate(match)">
-            Allocate Volunteer
-          </button>
+          <div class="decision-buttons">
+            <button
+              class="approve-btn"
+              @click="allocate(match)"
+            >
+              Approve
+            </button>
+
+            <button
+              class="decline-btn"
+              @click="decline(match)"
+            > 
+              Decline
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -319,6 +331,35 @@ async function allocate(match) {
   }
 }
 
+
+async function decline(match) {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const charityUserId = user.user_id || user.id;
+
+    if (!selectedNeedId.value) {
+      alert("Please select a volunteer need first.");
+      return;
+    }
+
+    await api.declineVolunteer(selectedNeedId.value, {
+      user_id: match.user_id,
+      charity_user_id: charityUserId
+    });
+
+    alert("Volunteer application declined.");
+
+    // Remove declined user from the displayed matches
+    matches.value = matches.value.filter(
+      item => item.user_id !== match.user_id
+    );
+
+  } catch (error) {
+    console.error("Failed to decline volunteer:", error);
+    alert(error.message || "Failed to decline volunteer.");
+  }
+}
+
 onMounted(() => {
   loadVolunteerNeeds();
 });
@@ -439,5 +480,35 @@ textarea {
     padding:6px 10px;
     border-radius:50%;
     cursor:pointer;
+}
+
+.decision-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.approve-btn {
+  background: #965f3f;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.decline-btn {
+  background: #b02a37;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.approve-btn:hover,
+.decline-btn:hover {
+  opacity: 0.9;
 }
 </style>
