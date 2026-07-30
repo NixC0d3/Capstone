@@ -34,7 +34,7 @@
             :class="{ active: currentTab === 'volunteer' }"
             @click="currentTab = 'volunteer'"
         >
-            Volunteer Opportunities
+            My Volunteer Applications
         </button>
 
         <button
@@ -217,7 +217,7 @@
 
 
         <div v-else-if="currentTab === 'volunteer'">
-            <VolunteerOpportunities />
+            <MyVolunteerApplications />
         </div>
 
         <div v-else-if="currentTab === 'notices'">
@@ -258,7 +258,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { api } from "@/services/api";
-import VolunteerOpportunities from "@/components/VolunteerOpportunities.vue";
+import MyVolunteerApplications from "@/components/MyVolunteerApplications.vue";
 
 const router = useRouter();
 const currentTab = ref("profile");

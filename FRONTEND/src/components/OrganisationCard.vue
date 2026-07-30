@@ -5,10 +5,13 @@ class="card"
 @click="openOrganization"
 >
     <!-- Image -->
-    <img
-        :src="organisation.image || 'https://placehold.co/300x200'"
-        class="org-image"
-    />
+    <div class="image-box">
+      <img
+        class="card-logo"
+        :src="organisation.image || organisation.image_url || '/CIH_logo.jpeg'"
+        :alt="organisation.organisation_name"
+      />
+    </div>
 
     <div class="card-content">
         <div class="header">
@@ -32,7 +35,17 @@ class="card"
         </div>
 
         <div class="rating">
-            ⭐ {{ organisation.rating || "No ratings yet" }}
+          <span v-if="organisation.review_count && organisation.review_count > 0">
+            ⭐ {{ Number(organisation.average_rating).toFixed(1) }}/5 ({{ organisation.review_count }})
+          </span>
+
+          <span v-else-if="organisation.rating">
+            ⭐ {{ organisation.rating }}
+          </span>
+
+          <span v-else>
+            ⭐ No ratings yet
+          </span>
         </div>
 
         <p class="location">
@@ -120,6 +133,24 @@ function saveOrg() {
 
 
 <style scoped>
+
+.image-box {
+  width: 100%;
+  height: 150px;
+  background: #f3eee9;
+  border-radius: 12px;
+  margin-bottom: 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-logo {
+  width: 115px;
+  height: 115px;
+  object-fit: contain;
+}
 
 .card{
     background:white;

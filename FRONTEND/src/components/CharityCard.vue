@@ -2,7 +2,7 @@
 
 <div
   class="charity-card"
-  @click="openOrganisation"
+  @click="openCharity"
 >
     <span 
     v-if="charity.organisation_type === 'charity'"
@@ -43,11 +43,11 @@
             Donate
         </button>
 
-        <button 
-        class="learn"
-        @click="learnMore"
+        <button
+          class="learn-more-btn"
+          @click.stop="openCharity"
         >
-            Learn More
+          Learn More
         </button>
     </div>
 
@@ -64,25 +64,27 @@ import { api } from "@/services/api";
 const router = useRouter();
 
 const props = defineProps({
-    charity:{
-        type:Object,
-        required:true
-    }
+  charity: {
+    type: Object,
+    required: true
+  }
 });
 
+async function openCharity() {
+  const charityId = props.charity?.organisation_id || props.charity?.id;
 
-function learnMore(){
-    router.push(`/organisation/${props.charity.organisation_id}`);
-}
+  if (!charityId) {
+    console.error("No charity ID found:", props.charity);
+    return;
+  }
 
-async function openOrganisation() {
   try {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const userId = user.user_id || user.id;
 
-    if (userId && props.charity?.organisation_id) {
+    if (userId) {
       await api.logEngagement({
-        organisation_id: props.charity.organisation_id,
+        organisation_id: charityId,
         user_id: userId,
         engagement_type: "profile_view"
       });
@@ -91,7 +93,7 @@ async function openOrganisation() {
     console.error("Failed to log profile view:", error);
   }
 
-  router.push(`/generaluser/organisation/${props.charity.organisation_id}`);
+  router.push(`/organisation/${charityId}`);
 }
 
 </script>

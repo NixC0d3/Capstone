@@ -16,14 +16,7 @@
         >
             Profile
         </button>
-
-        <button
-            :class="{ active: currentTab === 'volunteer' }"
-            @click="currentTab = 'volunteer'"
-        >
-            Volunteer Allocations
-        </button>
-
+        
         <button
             :class="{ active: currentTab === 'settings' }"
             @click="currentTab = 'settings'"
@@ -109,31 +102,6 @@
             </div>
             <p v-else>
                 You have no saved organisations yet.
-            </p>
-        </div>
-
-
-        <div v-else-if="currentTab === 'volunteer'">
-
-            <h2>Volunteer Allocations</h2>
-
-            <div
-                v-if="volunteerAllocations.length"
-                v-for="allocation in volunteerAllocations"
-                :key="allocation.id"
-            >
-                <p>
-                    {{ allocation.organisation_name }}
-                </p>
-                <p>
-                    {{ allocation.event_name }}
-                </p>
-                <p>
-                    {{ allocation.date }}
-                </p>
-            </div>
-            <p v-else>
-                No volunteer allocations yet.
             </p>
         </div>
 

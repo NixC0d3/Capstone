@@ -384,67 +384,96 @@ function next() {
   }
 }
 
-async function finish(){
-  try{
-    let role_id = null
+async function finish() {
+  try {
+    let role_id = null;
 
-    if(user.userType === "Community Member"){
-      role_id = 1
+    if (user.userType === "Community Member") {
+      role_id = 1;
     }
-    if(user.userType === "Business Owner"){
-      role_id = 2
+
+    if (user.userType === "Business Owner") {
+      role_id = 2;
     }
-    if(user.userType === "Charity Representative"){
-      role_id = 3
+
+    if (user.userType === "Charity Representative") {
+      role_id = 3;
     }
-    if(!role_id){
-      alert("Please select an account type")
-      return
+
+    if (!role_id) {
+      alert("Please select an account type");
+      return;
     }
 
     const payload = {
-      first_name:user.first_name,
-      last_name:user.last_name,
-      email:user.email,
-      password:user.password,
-      role_id:role_id,
-      location_id:user.location_id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      password: user.password,
+      role_id: role_id,
+      location_id: user.location_id,
+
       businessInterests: user.userType === "Community Member"
         ? user.businessInterests
         : [],
+
       charityInterests: user.userType === "Community Member"
         ? user.charityInterests
         : [],
+
       skills: user.userType === "Community Member"
         ? user.skills
         : []
+    };
+
+    const response = await registerUser(payload);
+
+    console.log("Signup response:", response);
+
+    /*
+      The backend should return the created user.
+      This handles either:
+      response.user
+      or
+      response itself as the user object.
+    */
+    const createdUser = response.user || response;
+
+    if (!createdUser || !(createdUser.user_id || createdUser.id)) {
+      alert("Account created, but login details were not returned. Please log in.");
+      router.push("/login");
+      return;
     }
-    
-    const response = await registerUser(payload)
-    
+
+    const loggedInUser = {
+      ...createdUser,
+      role_id: createdUser.role_id || role_id,
+      first_name: createdUser.first_name || user.first_name,
+      last_name: createdUser.last_name || user.last_name,
+      email: createdUser.email || user.email,
+      location_id: createdUser.location_id || user.location_id
+    };
+
+    // Clear old/buffer user
+    localStorage.removeItem("user");
+
+    // Save the new user immediately
+    localStorage.setItem("user", JSON.stringify(loggedInUser));
+
     // Redirect based on role
-    switch (role_id) {
-      case 1:
-        router.push("/generaluser/home");
-        break;
-
-      case 2:
-        // Business dashboard
-        router.push("/business-user/home");
-        break;
-
-      case 3:
-        // Charity dashboard
-        router.push("/charity-user/home");
-        break;
-
-      default:
-        errorMessage.value = "Unknown user role.";
+    if (Number(loggedInUser.role_id) === 1) {
+      router.push("/generaluser/home");
+    } else if (Number(loggedInUser.role_id) === 2) {
+      router.push("/business-user/home");
+    } else if (Number(loggedInUser.role_id) === 3) {
+      router.push("/charity-user/home");
+    } else {
+      router.push("/login");
     }
-  }catch(error){
 
-    console.error(error)
-    alert(error.message)
+  } catch (error) {
+    console.error("Signup failed:", error);
+    alert(error.message || "Signup failed. Please check the console.");
   }
 }
 

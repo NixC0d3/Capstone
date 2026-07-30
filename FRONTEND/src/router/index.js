@@ -32,6 +32,11 @@ const router = createRouter({
       component: () => import("@/views/general-user/GeneralUserCharity.vue")
     },
     {
+      path: "/generaluser/volunteer-opportunities",
+      component: () => import("@/views/general-user/VolunteerOpportunities.vue")
+    },
+    
+    {
       path: "/generaluser/profile",
       component: () => import("@/views/general-user/GeneralUserProfile.vue")
     },

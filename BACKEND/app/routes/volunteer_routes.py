@@ -309,24 +309,30 @@ def find_matching_volunteers(volunteer_need_id):
     need_category_ids = get_need_category_ids(need.organisation_id)
 
     users = db.session.execute(
-		text("""
-			SELECT
-				u.user_id,
-				COALESCE(u.display_name, u.first_name || ' ' || u.last_name) AS display_name,
-				u.email,
-				u.location_id,
-
-				l.parish AS user_parish,
-				l.town AS user_town
-			FROM users u
-			LEFT JOIN locations l
-				ON l.location_id = u.location_id
-			WHERE u.role_id = 1
-			  AND LOWER(COALESCE(u.email, '')) NOT LIKE '%@civilinfohub.test'
-			  AND LOWER(COALESCE(u.display_name, '')) NOT LIKE 'demo recommendation user%'
-			  AND LOWER(COALESCE(u.display_name, '')) NOT LIKE 'gen% general user';
-		""")
-	).fetchall()
+        text("""
+            SELECT
+                u.user_id,
+                COALESCE(u.display_name, u.first_name || ' ' || u.last_name) AS display_name,
+                u.email,
+                u.location_id,
+                vs.status AS signup_status,
+                vs.signed_up_at,
+                l.parish AS user_parish,
+                l.town AS user_town
+            FROM volunteer_signups vs
+            JOIN users u
+                ON u.user_id = vs.user_id
+            LEFT JOIN locations l
+                ON l.location_id = u.location_id
+            WHERE vs.volunteer_need_id = :volunteer_need_id
+              AND COALESCE(vs.status, 'pending') IN ('pending', 'signed_up')
+              AND u.role_id = 1
+              AND LOWER(COALESCE(u.email, '')) NOT LIKE '%@civilinfohub.test'
+              AND LOWER(COALESCE(u.display_name, '')) NOT LIKE 'demo recommendation user%'
+              AND LOWER(COALESCE(u.display_name, '')) NOT LIKE 'gen% general user';
+        """),
+        {"volunteer_need_id": volunteer_need_id}
+    ).fetchall()
 
     matches = []
 
@@ -439,94 +445,417 @@ def allocate_volunteer(volunteer_need_id):
     if owner_check.owner_user_id != int(charity_user_id):
         return jsonify(error="You cannot allocate volunteers for another charity's need"), 403
 
-    # Only insert after ownership has been confirmed
+    # Check that this volunteer actually signed up for this opportunity
+    signup_check = db.session.execute(
+        text("""
+            SELECT signup_id
+            FROM volunteer_signups
+            WHERE volunteer_need_id = :volunteer_need_id
+              AND user_id = :user_id
+              AND COALESCE(status, 'pending') IN ('pending', 'signed_up');
+        """),
+        {
+            "volunteer_need_id": volunteer_need_id,
+            "user_id": user_id
+        }
+    ).fetchone()
+
+    if not signup_check:
+        return jsonify(error="This user has not signed up for this volunteer opportunity"), 400
+
+    # Insert the approved allocation
     db.session.execute(
         text("""
             INSERT INTO volunteer_allocations
-            (
-                volunteer_need_id,
-                user_id,
-                matching_score,
-                allocation_status,
-                allocated_at
-            )
+                (
+                    volunteer_need_id,
+                    user_id,
+                    matching_score,
+                    allocation_status,
+                    allocated_at
+                )
             VALUES
-            (
-                :volunteer_need_id,
-                :user_id,
-                :matching_score,
-                'allocated',
-                CURRENT_TIMESTAMP
-            );
+                (
+                    :volunteer_need_id,
+                    :user_id,
+                    :match_score,
+                    'approved',
+                    CURRENT_TIMESTAMP
+                );
         """),
         {
             "volunteer_need_id": volunteer_need_id,
             "user_id": user_id,
-            "matching_score": match_score
+            "match_score": match_score
+        }
+    )
+
+    # Mark the user's application as approved
+    db.session.execute(
+        text("""
+            UPDATE volunteer_signups
+            SET status = 'approved'
+            WHERE volunteer_need_id = :volunteer_need_id
+              AND user_id = :user_id;
+        """),
+        {
+            "volunteer_need_id": volunteer_need_id,
+            "user_id": user_id
         }
     )
 
     db.session.commit()
 
-    return jsonify({
-        "message": "Volunteer allocated successfully",
-        "volunteer_need_id": volunteer_need_id,
-        "user_id": user_id,
-        "match_score": match_score
-    }), 201
+    return jsonify(message="Volunteer approved successfully"), 201
+    
+
+@volunteer_allocation_bp.route("/need/<int:volunteer_need_id>/decline", methods=["POST"])
+def decline_volunteer(volunteer_need_id):
+    data = request.get_json() or {}
+
+    user_id = data.get("user_id")
+    charity_user_id = data.get("charity_user_id")
+
+    if not user_id:
+        return jsonify(error="user_id is required"), 400
+
+    if not charity_user_id:
+        return jsonify(error="charity_user_id is required"), 400
+
+    # Check that this volunteer need belongs to the logged-in charity user
+    owner_check = db.session.execute(
+        text("""
+            SELECT
+                o.owner_user_id
+            FROM volunteer_needs vn
+            JOIN organisations o
+                ON o.organisation_id = vn.organisation_id
+            WHERE vn.volunteer_need_id = :volunteer_need_id;
+        """),
+        {"volunteer_need_id": volunteer_need_id}
+    ).fetchone()
+
+    if not owner_check:
+        return jsonify(error="Volunteer need not found"), 404
+
+    if owner_check.owner_user_id != int(charity_user_id):
+        return jsonify(error="You cannot decline applicants for another charity's need"), 403
+
+    # Check that the user actually signed up
+    signup_check = db.session.execute(
+        text("""
+            SELECT signup_id
+            FROM volunteer_signups
+            WHERE volunteer_need_id = :volunteer_need_id
+              AND user_id = :user_id;
+        """),
+        {
+            "volunteer_need_id": volunteer_need_id,
+            "user_id": user_id
+        }
+    ).fetchone()
+
+    if not signup_check:
+        return jsonify(error="This user has not signed up for this volunteer opportunity"), 400
+
+    # Mark the application as declined
+    db.session.execute(
+        text("""
+            UPDATE volunteer_signups
+            SET status = 'declined'
+            WHERE volunteer_need_id = :volunteer_need_id
+              AND user_id = :user_id;
+        """),
+        {
+            "volunteer_need_id": volunteer_need_id,
+            "user_id": user_id
+        }
+    )
+
+    db.session.commit()
+
+    return jsonify(message="Volunteer application declined"), 200
 
 @volunteer_allocation_bp.route("/opportunities", methods=["GET"])
 def volunteer_opportunities():
+    user_id = request.args.get("user_id", type=int)
 
     result = db.session.execute(
         text("""
-        SELECT
-            vn.volunteer_need_id,
-            vn.title,
-            vn.description,
-            vn.needed_date,
-            vn.urgency_level,
-            o.organisation_name
-        FROM volunteer_needs vn
-        JOIN organisations o
-        ON o.organisation_id = vn.organisation_id
-        WHERE vn.status='open';
-        """)
+            SELECT
+                vn.volunteer_need_id,
+                vn.organisation_id,
+                vn.title,
+                vn.description,
+                vn.needed_date,
+                vn.start_time,
+                vn.end_time,
+                vn.urgency_level,
+                vn.volunteers_needed,
+                vn.status,
+                o.organisation_name,
+                l.parish,
+                l.town,
+                COALESCE(vs.status, '') AS application_status,
+                CASE
+                    WHEN vs.signup_id IS NULL THEN FALSE
+                    ELSE TRUE
+                END AS already_signed_up,
+                COALESCE(string_agg(DISTINCT vrs.skill_name, ', '), '') AS required_skills_text
+            FROM volunteer_needs vn
+            JOIN organisations o
+                ON o.organisation_id = vn.organisation_id
+            LEFT JOIN locations l
+                ON l.location_id = o.location_id
+            LEFT JOIN volunteer_required_skills vrs
+                ON vrs.volunteer_need_id = vn.volunteer_need_id
+            LEFT JOIN volunteer_signups vs
+                ON vs.volunteer_need_id = vn.volunteer_need_id
+               AND vs.user_id = :user_id
+            WHERE COALESCE(vn.status, 'open') = 'open'
+            GROUP BY
+                vn.volunteer_need_id,
+                vn.organisation_id,
+                vn.title,
+                vn.description,
+                vn.needed_date,
+                vn.start_time,
+                vn.end_time,
+                vn.urgency_level,
+                vn.volunteers_needed,
+                vn.status,
+                o.organisation_name,
+                l.parish,
+                l.town,
+                vs.signup_id,
+                vs.status
+            ORDER BY vn.created_at DESC, vn.volunteer_need_id DESC;
+        """),
+        {"user_id": user_id}
     )
 
-    return jsonify([
-        dict(row._mapping)
-        for row in result
-    ])
+    opportunities = []
+
+    for row in result:
+        required_skills = []
+
+        if row.required_skills_text:
+            required_skills = [
+                skill.strip()
+                for skill in row.required_skills_text.split(",")
+                if skill.strip()
+            ]
+
+        opportunities.append({
+            "volunteer_need_id": row.volunteer_need_id,
+            "organisation_id": row.organisation_id,
+            "organisation_name": row.organisation_name,
+            "title": row.title,
+            "description": row.description,
+            "needed_date": row.needed_date.isoformat() if row.needed_date else None,
+            "start_time": str(row.start_time) if row.start_time else None,
+            "end_time": str(row.end_time) if row.end_time else None,
+            "urgency_level": row.urgency_level,
+            "volunteers_needed": row.volunteers_needed,
+            "status": row.status,
+            "parish": row.parish,
+            "town": row.town,
+            "required_skills": required_skills,
+            "already_signed_up": bool(row.already_signed_up),
+            "application_status": row.application_status or None
+        })
+
+    return jsonify(opportunities), 200
+    
+    
 
 @volunteer_allocation_bp.route("/signup", methods=["POST"])
 def signup_volunteer():
+    data = request.get_json() or {}
 
-    data=request.get_json()
+    volunteer_need_id = data.get("volunteer_need_id")
+    user_id = data.get("user_id")
+
+    if not volunteer_need_id:
+        return jsonify(error="volunteer_need_id is required"), 400
+
+    if not user_id:
+        return jsonify(error="user_id is required"), 400
+
+    user_check = db.session.execute(
+        text("""
+            SELECT user_id
+            FROM users
+            WHERE user_id = :user_id
+              AND role_id = 1;
+        """),
+        {"user_id": user_id}
+    ).fetchone()
+
+    if not user_check:
+        return jsonify(error="Only general users can sign up for volunteer opportunities"), 403
+
+    need_check = db.session.execute(
+        text("""
+            SELECT volunteer_need_id, organisation_id
+            FROM volunteer_needs
+            WHERE volunteer_need_id = :volunteer_need_id
+              AND COALESCE(status, 'open') = 'open';
+        """),
+        {"volunteer_need_id": volunteer_need_id}
+    ).fetchone()
+
+    if not need_check:
+        return jsonify(error="Volunteer opportunity not found or not open"), 404
 
     db.session.execute(
         text("""
-        INSERT INTO volunteer_signups
-        (
-        volunteer_need_id,
-        user_id,
-        status
-        )
-        VALUES
-        (
-        :need,
-        :user,
-        'pending'
-        )
+            INSERT INTO volunteer_signups
+                (volunteer_need_id, user_id, status, signed_up_at)
+            VALUES
+                (:volunteer_need_id, :user_id, 'pending', CURRENT_TIMESTAMP)
+            ON CONFLICT (volunteer_need_id, user_id)
+            DO UPDATE SET
+                status = 'pending',
+                signed_up_at = CURRENT_TIMESTAMP;
         """),
         {
-        "need":data["volunteer_need_id"],
-        "user":data["user_id"]
+            "volunteer_need_id": volunteer_need_id,
+            "user_id": user_id
+        }
+    )
+
+    db.session.execute(
+        text("""
+            INSERT INTO engagement_logs
+                (organisation_id, user_id, engagement_type, created_at)
+            VALUES
+                (:organisation_id, :user_id, 'volunteer_signup', CURRENT_TIMESTAMP);
+        """),
+        {
+            "organisation_id": need_check.organisation_id,
+            "user_id": user_id
         }
     )
 
     db.session.commit()
 
-    return jsonify(
-        message="Signup successful"
+    return jsonify(message="Volunteer signup successful"), 201
+    
+    
+    
+@volunteer_allocation_bp.route("/my-applications", methods=["GET"])
+def my_volunteer_applications():
+    user_id = request.args.get("user_id", type=int)
+
+    if not user_id:
+        return jsonify(error="user_id is required"), 400
+
+    result = db.session.execute(
+        text("""
+            SELECT
+                vs.signup_id,
+                vs.status AS signup_status,
+                vs.signed_up_at,
+                vn.volunteer_need_id,
+                vn.organisation_id,
+                vn.title,
+                vn.description,
+                vn.needed_date,
+                vn.start_time,
+                vn.end_time,
+                vn.urgency_level,
+                vn.volunteers_needed,
+                vn.status AS need_status,
+                o.organisation_name,
+                l.parish,
+                l.town,
+                va.allocation_id,
+                va.matching_score,
+                va.allocation_status,
+                va.allocated_at,
+                COALESCE(string_agg(DISTINCT vrs.skill_name, ', '), '') AS required_skills_text
+            FROM volunteer_signups vs
+            JOIN volunteer_needs vn
+                ON vn.volunteer_need_id = vs.volunteer_need_id
+            JOIN organisations o
+                ON o.organisation_id = vn.organisation_id
+            LEFT JOIN locations l
+                ON l.location_id = o.location_id
+            LEFT JOIN volunteer_allocations va
+                ON va.volunteer_need_id = vs.volunteer_need_id
+               AND va.user_id = vs.user_id
+            LEFT JOIN volunteer_required_skills vrs
+                ON vrs.volunteer_need_id = vn.volunteer_need_id
+            WHERE vs.user_id = :user_id
+            GROUP BY
+                vs.signup_id,
+                vs.status,
+                vs.signed_up_at,
+                vn.volunteer_need_id,
+                vn.organisation_id,
+                vn.title,
+                vn.description,
+                vn.needed_date,
+                vn.start_time,
+                vn.end_time,
+                vn.urgency_level,
+                vn.volunteers_needed,
+                vn.status,
+                o.organisation_name,
+                l.parish,
+                l.town,
+                va.allocation_id,
+                va.matching_score,
+                va.allocation_status,
+                va.allocated_at
+            ORDER BY vs.signed_up_at DESC;
+        """),
+        {"user_id": user_id}
     )
+
+    applications = []
+
+    for row in result:
+        required_skills = []
+
+        if row.required_skills_text:
+            required_skills = [
+                skill.strip()
+                for skill in row.required_skills_text.split(",")
+                if skill.strip()
+            ]
+
+        final_status = row.signup_status or "pending"
+
+        if row.allocation_status in ("allocated", "approved", "accepted"):
+          final_status = "approved"
+        elif row.signup_status in ("declined", "rejected"):
+          final_status = "declined"
+        elif row.allocation_status in ("rejected", "cancelled"):
+          final_status = "declined"
+
+        applications.append({
+            "signup_id": row.signup_id,
+            "volunteer_need_id": row.volunteer_need_id,
+            "organisation_id": row.organisation_id,
+            "organisation_name": row.organisation_name,
+            "title": row.title,
+            "description": row.description,
+            "needed_date": row.needed_date.isoformat() if row.needed_date else None,
+            "start_time": str(row.start_time) if row.start_time else None,
+            "end_time": str(row.end_time) if row.end_time else None,
+            "urgency_level": row.urgency_level,
+            "volunteers_needed": row.volunteers_needed,
+            "need_status": row.need_status,
+            "parish": row.parish,
+            "town": row.town,
+            "required_skills": required_skills,
+            "signup_status": row.signup_status,
+            "allocation_status": row.allocation_status,
+            "matching_score": float(row.matching_score or 0),
+            "allocated_at": row.allocated_at.isoformat() if row.allocated_at else None,
+            "final_status": final_status
+        })
+
+    return jsonify(applications), 200

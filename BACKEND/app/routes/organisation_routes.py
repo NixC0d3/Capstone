@@ -50,6 +50,30 @@ def organisation_to_dict(org):
     if data["category_name"] is None and category_rows:
         data["category_name"] = category_rows[0].category_name
         data["category_type"] = category_rows[0].category_type
+        
+    # Rating summary from ratings_reviews table
+    rating_row = db.session.execute(
+        text("""
+            SELECT
+                COUNT(*) AS review_count,
+                COALESCE(AVG(rating), 0) AS average_rating
+            FROM ratings_reviews
+            WHERE organisation_id = :organisation_id
+              AND COALESCE(is_hidden, FALSE) = FALSE;
+        """),
+        {"organisation_id": org.organisation_id}
+    ).fetchone()
+
+    review_count = int(rating_row.review_count or 0)
+    average_rating = round(float(rating_row.average_rating or 0), 1)
+
+    data["review_count"] = review_count
+    data["average_rating"] = average_rating
+
+    if review_count > 0:
+        data["rating"] = f"{average_rating}/5 ({review_count})"
+    else:
+        data["rating"] = None
 
     return data
 

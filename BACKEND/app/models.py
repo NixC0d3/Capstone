@@ -35,7 +35,7 @@ class User(db.Model, SerializerMixin):
     skills = db.relationship("UserSkill",backref="user",lazy=True)
     display_name = db.Column(db.String(150))
     last_login_at = db.Column(db.DateTime)
-    account_status = db.Column(db.String(30), default="active")
+    account_status = db.Column(db.String(20), default="active")
 
 class Category(db.Model, SerializerMixin):
     __tablename__ = "categories"

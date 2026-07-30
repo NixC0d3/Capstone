@@ -18,6 +18,10 @@
         <router-link to="/generaluser/charities">
             Charities
         </router-link>
+        
+        <router-link to="/generaluser/volunteer-opportunities">
+            Volunteer Opportunities
+        </router-link>
 
         <router-link to="/about">
             About
